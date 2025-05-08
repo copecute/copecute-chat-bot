@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
@@ -11,11 +12,13 @@ class AuthService extends ChangeNotifier {
   String? _errorMessage;
 
   // API URL
-  final String _baseUrl = 'https://yourdomain.com/api';
+  final String _baseUrl = 'https://copecute.minhgiang.pro/api';
 
   // Google Sign-In instance
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
+    serverClientId:
+        '372915420416-dkg8ht28i9p9qoog9diunlk2d1p2ovmt.apps.googleusercontent.com',
   );
 
   User? get currentUser => _currentUser;
@@ -59,6 +62,29 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  // Xử lý mã lỗi Google Sign-In
+  String _getGoogleSignInErrorMessage(dynamic error) {
+    try {
+      if (error.toString().contains('ApiException: 10:')) {
+        return 'Lỗi kết nối đến dịch vụ Google Play. Kiểm tra kết nối Internet và thử lại.';
+      } else if (error.toString().contains('ApiException: 12501')) {
+        return 'Đăng nhập bị hủy bởi người dùng.';
+      } else if (error.toString().contains('ApiException: 16:')) {
+        return 'Lỗi xác thực. Vui lòng kiểm tra thông tin đăng nhập.';
+      } else if (error.toString().contains('network_error')) {
+        return 'Lỗi kết nối mạng. Vui lòng kiểm tra kết nối Internet của bạn.';
+      } else if (error.toString().contains('sign_in_required')) {
+        return 'Yêu cầu đăng nhập lại.';
+      } else if (error.toString().contains('canceled')) {
+        return 'Đăng nhập bị hủy.';
+      } else {
+        return 'Lỗi đăng nhập: ${error.toString()}';
+      }
+    } catch (_) {
+      return 'Lỗi không xác định khi đăng nhập: $error';
+    }
+  }
+
   // Đăng nhập bằng Google
   Future<bool> signInWithGoogle() async {
     _isLoading = true;
@@ -66,45 +92,125 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
 
     try {
+      debugPrint('Bắt đầu quá trình đăng nhập Google...');
+
+      // Đăng xuất trước để tránh lỗi phiên
+      try {
+        await _googleSignIn.signOut();
+        debugPrint('Đã đăng xuất Google trước khi đăng nhập lại');
+      } catch (e) {
+        debugPrint('Không thể đăng xuất Google: $e');
+        // Tiếp tục thực hiện đăng nhập ngay cả khi không thể đăng xuất
+      }
+
       // Khởi tạo quá trình đăng nhập Google
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        _errorMessage = 'Đăng nhập Google bị hủy';
+      final GoogleSignInAccount? googleUser;
+      try {
+        googleUser = await _googleSignIn.signIn();
+      } catch (e) {
+        _errorMessage = _getGoogleSignInErrorMessage(e);
+        debugPrint('Lỗi khi gọi signIn: $_errorMessage');
         _isLoading = false;
         notifyListeners();
         return false;
       }
 
+      if (googleUser == null) {
+        _errorMessage = 'Đăng nhập Google bị hủy';
+        _isLoading = false;
+        notifyListeners();
+        debugPrint('Người dùng đã hủy đăng nhập Google');
+        return false;
+      }
+
+      debugPrint(
+          'Đã đăng nhập Google thành công với email: ${googleUser.email}');
+
       // Lấy thông tin xác thực
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-      final String idToken = googleAuth.idToken!;
+      debugPrint('Đang lấy token xác thực...');
+      final GoogleSignInAuthentication googleAuth;
+      try {
+        googleAuth = await googleUser.authentication;
+      } catch (e) {
+        debugPrint('Lỗi khi lấy thông tin xác thực: $e');
+        _errorMessage = 'Không thể lấy thông tin xác thực: $e';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      final String? idToken = googleAuth.idToken;
+      final String? accessToken = googleAuth.accessToken;
+
+      debugPrint('ID Token: ${idToken != null ? "Có" : "Không có"}');
+      debugPrint('Access Token: ${accessToken != null ? "Có" : "Không có"}');
+
+      if (idToken == null || idToken.isEmpty) {
+        _errorMessage = 'Không thể lấy token xác thực từ Google';
+        _isLoading = false;
+        notifyListeners();
+        debugPrint('ID token từ Google là null hoặc trống');
+        return false;
+      }
+
+      // Tạo URL API login
+      final apiUrl = 'https://copecute.minhgiang.pro/api/google_login.php';
+      debugPrint('Gửi request đến: $apiUrl');
+
+      // Chuẩn bị dữ liệu
+      final Map<String, dynamic> loginData = {
+        'id_token': idToken,
+        'access_token': accessToken,
+        'email': googleUser.email,
+        'name': googleUser.displayName ?? '',
+        'photo': googleUser.photoUrl ?? '',
+      };
+
+      debugPrint('Dữ liệu gửi đi: ${loginData.toString()}');
 
       // Gửi ID token đến server API
       final response = await http.post(
-        Uri.parse('$_baseUrl/google_login.php'),
+        Uri.parse(apiUrl),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({'id_token': idToken}),
+        body: json.encode(loginData),
       );
 
+      debugPrint('Phản hồi từ server: HTTP ${response.statusCode}');
       if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
+        try {
+          final responseData = json.decode(response.body);
+          final responsePreview = response.body.length > 100
+              ? '${response.body.substring(0, 100)}...'
+              : response.body;
+          debugPrint('Phản hồi JSON: $responsePreview');
 
-        if (responseData['success'] == true && responseData['data'] != null) {
-          _currentUser = User.fromJson(responseData['data']);
-          await _saveUserToPrefs(_currentUser!);
-          _isLoading = false;
-          notifyListeners();
-          return true;
-        } else {
-          _errorMessage = responseData['error'] ?? 'Đăng nhập thất bại';
+          if (responseData['success'] == true && responseData['data'] != null) {
+            _currentUser = User.fromJson(responseData['data']);
+            await _saveUserToPrefs(_currentUser!);
+            _isLoading = false;
+            notifyListeners();
+            debugPrint('Đăng nhập thành công');
+            return true;
+          } else {
+            _errorMessage = responseData['error'] ?? 'Đăng nhập thất bại';
+            debugPrint('Server trả về lỗi: $_errorMessage');
+          }
+        } catch (e) {
+          _errorMessage = 'Lỗi xử lý dữ liệu: $e';
+          debugPrint('Lỗi xử lý JSON: $e');
         }
       } else {
-        final errorResponse = json.decode(response.body);
-        _errorMessage = errorResponse['error'] ?? 'Lỗi kết nối đến server';
+        try {
+          final errorResponse = json.decode(response.body);
+          _errorMessage = errorResponse['error'] ??
+              'Lỗi kết nối đến server: ${response.statusCode}';
+        } catch (e) {
+          _errorMessage = 'Lỗi kết nối đến server: ${response.statusCode}';
+        }
+        debugPrint('HTTP Error: $_errorMessage');
       }
     } catch (e) {
-      _errorMessage = 'Đã xảy ra lỗi: $e';
+      _errorMessage = 'Đã xảy ra lỗi khi đăng nhập: $e';
       debugPrint('Sign in error: $e');
     }
 
