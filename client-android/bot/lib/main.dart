@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'services/auth_service.dart';
+import 'services/chat_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/chat_screen.dart';
+import 'screens/profile_screen.dart';
+import 'screens/settings_screen.dart';
 import 'providers/settings_provider.dart';
+import 'utils/app_theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,52 +22,22 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (context) => AuthService()),
         ChangeNotifierProvider(create: (context) => SettingsProvider()),
+        ChangeNotifierProvider(create: (context) => ChatService()),
       ],
-      child: Consumer<AuthService>(
-        builder: (context, authService, _) {
+      child: Consumer2<AuthService, SettingsProvider>(
+        builder: (context, authService, settingsProvider, _) {
+          final settings = settingsProvider.settings;
+
           return MaterialApp(
-            title: 'SimSimi Chatbot',
+            title: 'Copecute Chatbot',
             debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(
-                seedColor: Colors.deepPurple,
-                brightness: Brightness.light,
-              ),
-              useMaterial3: true,
-              inputDecorationTheme: InputDecorationTheme(
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
-                ),
-              ),
-              elevatedButtonTheme: ElevatedButtonThemeData(
-                style: ElevatedButton.styleFrom(
-                  elevation: 0,
-                  backgroundColor: Colors.deepPurple,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              cardTheme: CardTheme(
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
-            home: authService.isLoading
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: settings.getThemeMode(),
+            home: authService.isLoading || !settingsProvider.isLoaded
                 ? const LoadingScreen()
                 : authService.isLoggedIn
-                    ? const ChatScreen()
+                    ? const HomeScreen()
                     : const LoginScreen(),
           );
         },
@@ -82,5 +56,75 @@ class LoadingScreen extends StatelessWidget {
         child: CircularProgressIndicator(),
       ),
     );
+  }
+}
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _selectedIndex = 0;
+  static const Color messengerBlue = Color(0xFF0084FF);
+
+  @override
+  Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
+
+    return Scaffold(
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: const [
+          ChatScreen(),
+          ProfileScreen(),
+          SettingsScreen(),
+        ],
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              spreadRadius: 0,
+            ),
+          ],
+        ),
+        child: NavigationBar(
+          backgroundColor: backgroundColor,
+          selectedIndex: _selectedIndex,
+          onDestinationSelected: _onItemTapped,
+          indicatorColor: messengerBlue.withOpacity(0.2),
+          labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+          destinations: const <Widget>[
+            NavigationDestination(
+              icon: Icon(Icons.chat_bubble_outline),
+              selectedIcon: Icon(Icons.chat_bubble, color: messengerBlue),
+              label: 'Trò chuyện',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.person_outline),
+              selectedIcon: Icon(Icons.person, color: messengerBlue),
+              label: 'Cá nhân',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.settings_outlined),
+              selectedIcon: Icon(Icons.settings, color: messengerBlue),
+              label: 'Cài đặt',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 }

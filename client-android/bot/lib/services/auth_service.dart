@@ -25,7 +25,8 @@ class AuthService extends ChangeNotifier {
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
     // Thêm dòng dưới đây và chú thích lại nếu gặp lỗi
-    serverClientId: '372915420416-dkg8ht28i9p9qoog9diunlk2d1p2ovmt.apps.googleusercontent.com',
+    serverClientId:
+        '372915420416-dkg8ht28i9p9qoog9diunlk2d1p2ovmt.apps.googleusercontent.com',
   );
 
   User? get currentUser => _currentUser;
@@ -88,6 +89,12 @@ class AuthService extends ChangeNotifier {
         return 'Đăng nhập bị hủy bởi người dùng.';
       } else if (error.toString().contains('ApiException: 16:')) {
         return 'Lỗi xác thực. Vui lòng kiểm tra thông tin đăng nhập.';
+      } else if (error.toString().contains('network_error')) {
+        return 'Lỗi kết nối mạng. Vui lòng kiểm tra kết nối Internet của bạn.';
+      } else if (error.toString().contains('sign_in_required')) {
+        return 'Yêu cầu đăng nhập lại.';
+      } else if (error.toString().contains('canceled')) {
+        return 'Đăng nhập bị hủy.';
       } else {
         return 'Lỗi đăng nhập: ${error.toString()}';
       }
@@ -111,6 +118,7 @@ class AuthService extends ChangeNotifier {
         debugPrint('Đã đăng xuất Google trước khi đăng nhập lại');
       } catch (e) {
         debugPrint('Không thể đăng xuất Google: $e');
+        // Tiếp tục thực hiện đăng nhập ngay cả khi không thể đăng xuất
       }
 
       // Khởi tạo quá trình đăng nhập Google
@@ -128,8 +136,17 @@ class AuthService extends ChangeNotifier {
 
       // Lấy thông tin xác thực
       debugPrint('Đang lấy token xác thực...');
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth;
+      try {
+        googleAuth = await googleUser.authentication;
+      } catch (e) {
+        debugPrint('Lỗi khi lấy thông tin xác thực: $e');
+        _errorMessage = 'Không thể lấy thông tin xác thực: $e';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
       final String? idToken = googleAuth.idToken;
       final String? accessToken = googleAuth.accessToken;
 
@@ -146,8 +163,19 @@ class AuthService extends ChangeNotifier {
         return false;
       }
 
-      // Thay thế phần gửi token đến server bằng việc tạo user giả lập
-      // Chỉ sử dụng code này khi bạn muốn test mà không cần kết nối server
+      // Chuẩn bị thông tin người dùng từ Google account
+      final userData = {
+        'id_token': idToken,
+        'access_token': accessToken,
+        'email': googleUser.email,
+        'name': googleUser.displayName ?? '',
+        'photo': googleUser.photoUrl ?? '',
+        'id': googleUser.id,
+      };
+
+      debugPrint('Thông tin người dùng: $userData');
+
+      // Xử lý đăng nhập dựa trên chế độ
       if (_isDevMode) {
         try {
           debugPrint('Thử kết nối tới ${baseUrl}/google_login.php');
@@ -156,7 +184,7 @@ class AuthService extends ChangeNotifier {
           final response = await http.post(
             Uri.parse('${baseUrl}/google_login.php'),
             headers: {'Content-Type': 'application/json'},
-            body: json.encode({'id_token': idToken}),
+            body: json.encode(userData),
           );
 
           debugPrint('Phản hồi từ máy chủ: ${response.statusCode}');
@@ -210,41 +238,90 @@ class AuthService extends ChangeNotifier {
         }
       } else {
         // Kết nối server thật (sản phẩm)
-        try {
-          final response = await http.post(
-            Uri.parse('${baseUrl}/google_login.php'),
-            headers: {'Content-Type': 'application/json'},
-            body: json.encode({'id_token': idToken}),
-          );
+        bool isSuccess = false;
+        String errorMsg = '';
 
-          debugPrint('Phản hồi từ máy chủ chính thức: ${response.statusCode}');
-          debugPrint('Nội dung phản hồi: ${response.body}');
+        // Thử nghiệm với nhiều endpoints khác nhau
+        List<String> endpoints = [
+          '${baseUrl}/google_login.php',
+          '${AppConstants.baseUrl}/google_login.php',
+          '${AppConstants.baseUrl}/login.php'
+        ];
 
-          if (response.statusCode == 200) {
-            final responseData = json.decode(response.body);
+        for (String endpoint in endpoints) {
+          if (isSuccess) break; // Nếu đã thành công thì không cần thử tiếp
 
-            if (responseData['success'] == true &&
-                responseData['data'] != null) {
-              _currentUser = User.fromJson(responseData['data']);
-              await _saveUserToPrefs(_currentUser!);
-              _isLoading = false;
-              notifyListeners();
-              return true;
+          try {
+            debugPrint('Thử kết nối tới $endpoint');
+            final response = await http.post(
+              Uri.parse(endpoint),
+              headers: {'Content-Type': 'application/json'},
+              body: json.encode(userData),
+            );
+
+            debugPrint('Phản hồi từ $endpoint: ${response.statusCode}');
+            debugPrint('Nội dung phản hồi: ${response.body}');
+
+            if (response.statusCode == 200) {
+              try {
+                final responseData = json.decode(response.body);
+
+                if (responseData['success'] == true &&
+                    responseData['data'] != null) {
+                  _currentUser = User.fromJson(responseData['data']);
+                  await _saveUserToPrefs(_currentUser!);
+                  isSuccess = true;
+                  break;
+                } else {
+                  errorMsg = responseData['error'] ?? 'Đăng nhập thất bại';
+                }
+              } catch (e) {
+                debugPrint('Lỗi khi phân tích dữ liệu JSON: $e');
+                errorMsg = 'Lỗi khi phân tích dữ liệu: $e';
+              }
             } else {
-              _errorMessage = responseData['error'] ?? 'Đăng nhập thất bại';
+              try {
+                final errorResponse = json.decode(response.body);
+                errorMsg = errorResponse['error'] ??
+                    'Lỗi kết nối đến server: ${response.statusCode}';
+              } catch (e) {
+                errorMsg = 'Lỗi kết nối đến server: ${response.statusCode}';
+              }
             }
-          } else {
-            try {
-              final errorResponse = json.decode(response.body);
-              _errorMessage = errorResponse['error'] ??
-                  'Lỗi kết nối đến server: ${response.statusCode}';
-            } catch (e) {
-              _errorMessage = 'Lỗi kết nối đến server: ${response.statusCode}';
-            }
+          } catch (e) {
+            debugPrint('Lỗi khi kết nối đến endpoint $endpoint: $e');
+            errorMsg = 'Lỗi kết nối đến server: $e';
           }
-        } catch (e) {
-          debugPrint('Lỗi khi kết nối đến server chính thức: $e');
-          _errorMessage = 'Lỗi kết nối đến server: $e';
+        }
+
+        if (isSuccess) {
+          _isLoading = false;
+          notifyListeners();
+          return true;
+        } else {
+          // Nếu tất cả các phương pháp kết nối thất bại và đang ở chế độ phát triển
+          // hoặc trong trường hợp khẩn cấp, tạo user giả lập để tiếp tục
+          if (_isDevMode) {
+            debugPrint('Tạo user giả lập để test trong trường hợp khẩn cấp');
+            _currentUser = User(
+              userId: 1,
+              username: googleUser.displayName ??
+                  'user${DateTime.now().millisecondsSinceEpoch}',
+              email: googleUser.email,
+              level: 0,
+              fullName: googleUser.displayName ?? 'Người dùng',
+              avatar: googleUser.photoUrl,
+              token: 'token_test_${DateTime.now().millisecondsSinceEpoch}',
+              quota: 100,
+            );
+
+            await _saveUserToPrefs(_currentUser!);
+            _isLoading = false;
+            notifyListeners();
+            return true;
+          }
+
+          _errorMessage = errorMsg;
         }
       }
     } catch (e) {
@@ -281,6 +358,98 @@ class AuthService extends ChangeNotifier {
   // Lấy token xác thực cho các API request
   String? getAuthToken() {
     return _currentUser?.token;
+  }
+
+  // Cập nhật thông tin người dùng
+  Future<bool> updateUserProfile(Map<String, dynamic> userData) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final token = getAuthToken();
+      if (token == null) {
+        _errorMessage = 'Không có token xác thực';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      // Gửi yêu cầu cập nhật thông tin đến server
+      final response = await http.post(
+        Uri.parse('${baseUrl}/update_profile.php'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode(userData),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+
+        if (responseData['success'] == true) {
+          // Cập nhật thông tin người dùng hiện tại
+          if (_currentUser != null) {
+            final updatedUser = User(
+              userId: _currentUser!.userId,
+              username: _currentUser!.username,
+              email: _currentUser!.email,
+              level: _currentUser!.level,
+              fullName: userData['fullName'] ?? _currentUser!.fullName,
+              avatar: userData['avatar'] ?? _currentUser!.avatar,
+              token: _currentUser!.token,
+              quota: _currentUser!.quota,
+              bio: userData['bio'] ?? _currentUser!.bio,
+            );
+
+            _currentUser = updatedUser;
+            await _saveUserToPrefs(_currentUser!);
+          }
+
+          _isLoading = false;
+          notifyListeners();
+          return true;
+        } else {
+          _errorMessage = responseData['error'] ?? 'Cập nhật thất bại';
+        }
+      } else {
+        final errorResponse = json.decode(response.body);
+        _errorMessage = errorResponse['error'] ?? 'Lỗi kết nối đến server';
+      }
+    } catch (e) {
+      _errorMessage = 'Đã xảy ra lỗi: $e';
+      debugPrint('Update profile error: $e');
+    }
+
+    // Nếu đang ở chế độ phát triển, cho phép cập nhật offline
+    if (_isDevMode && _currentUser != null) {
+      debugPrint(
+          'Đang ở chế độ phát triển, cập nhật thông tin người dùng offline');
+
+      final updatedUser = User(
+        userId: _currentUser!.userId,
+        username: _currentUser!.username,
+        email: _currentUser!.email,
+        level: _currentUser!.level,
+        fullName: userData['fullName'] ?? _currentUser!.fullName,
+        avatar: userData['avatar'] ?? _currentUser!.avatar,
+        token: _currentUser!.token,
+        quota: _currentUser!.quota,
+        bio: userData['bio'] ?? _currentUser!.bio,
+      );
+
+      _currentUser = updatedUser;
+      await _saveUserToPrefs(_currentUser!);
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
   }
 
   // Xóa lỗi

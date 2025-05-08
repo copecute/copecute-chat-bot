@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   // Màu sắc chính của ứng dụng
-  static const Color primaryColor = Color(0xFF4E55FF);
+  static const Color messengerBlue = Color(0xFF0084FF);
+  static const Color primaryColor = messengerBlue;
   static const Color secondaryColor = Color(0xFF00CFDE);
   static const Color backgroundColor = Color(0xFFF8F9FF);
   static const Color cardColor = Color(0xFFFFFFFF);
@@ -12,7 +13,7 @@ class AppTheme {
   static const Color successColor = Color(0xFF00C48C);
 
   // Dark mode colors
-  static const Color darkPrimaryColor = Color(0xFF6C72FF);
+  static const Color darkPrimaryColor = messengerBlue;
   static const Color darkSecondaryColor = Color(0xFF00E3F3);
   static const Color darkBackgroundColor = Color(0xFF121212);
   static const Color darkCardColor = Color(0xFF1E1E1E);

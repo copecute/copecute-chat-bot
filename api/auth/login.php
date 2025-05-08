@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once '../config.php';
 
 // Chỉ chấp nhận phương thức POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

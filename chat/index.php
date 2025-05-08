@@ -458,6 +458,18 @@ require_once '../includes/layouts/header.php';
             
             scrollToBottom();
             
+            // Hàm lấy thời điểm trong ngày
+            function getUserTimeOfDay() {
+                var hour = new Date().getHours();
+                if (hour < 12) {
+                    return "Chào buổi sáng";
+                } else if (hour < 18) {
+                    return "Chào buổi chiều";
+                } else {
+                    return "Chào buổi tối";
+                }
+            }
+            
             // Xử lý gửi tin nhắn
             function sendMessage() {
                 var userInput = $('#userInput').val().trim();
@@ -606,14 +618,26 @@ require_once '../includes/layouts/header.php';
             
             // Hàm lấy avatar bot ngẫu nhiên
             function getRandomBotAvatar() {
-            var avatars = [ <?php
-                $avatars = glob("../assets/img/copecute/cope*.png");
-                foreach($avatars as $avatar) {
-                    echo '"'.$avatar.
-                    '", ';
-                } ?>
+                var avatars = [ <?php
+                    $avatars = glob("../assets/img/copecute/cope*.png");
+                    foreach($avatars as $avatar) {
+                        echo '"'.$avatar.
+                        '", ';
+                    } ?>
                 ];
                 return avatars[Math.floor(Math.random() * avatars.length)];
+            }
+            
+            // Hàm lấy thời điểm trong ngày
+            function getUserTimeOfDay() {
+                var hour = new Date().getHours();
+                if (hour < 12) {
+                    return "Chào buổi sáng";
+                } else if (hour < 18) {
+                    return "Chào buổi chiều";
+                } else {
+                    return "Chào buổi tối";
+                }
             }
             
         // User dropdown functionality
@@ -634,7 +658,7 @@ require_once '../includes/layouts/header.php';
             e.preventDefault();
                 if (confirm('Bạn có chắc chắn muốn xóa tất cả tin nhắn không?')) {
                     $.ajax({
-                        url: 'clear_messages.php',
+                        url: '<?php echo $base_url; ?>/chat/clear_messages.php',
                         type: 'POST',
                     success: function (response) {
                             if (response.success) {
@@ -664,12 +688,23 @@ require_once '../includes/layouts/header.php';
                                     // Xóa tin nhắn loading
                                     $('#loadingMessage').remove();
                                     
+                                    // Lấy lời chào theo thời gian hiện tại
+                                    var greeting = '';
+                                    var currentHour = new Date().getHours();
+                                    if (currentHour < 12) {
+                                        greeting = "Chào buổi sáng";
+                                    } else if (currentHour < 18) {
+                                        greeting = "Chào buổi chiều";
+                                    } else {
+                                        greeting = "Chào buổi tối";
+                                    }
+                                    
                                     // Hiển thị phản hồi từ bot
                                     $('#chatMessages').append(`
                                         <div class="message bot-message">
                                             <img src="${getRandomBotAvatar()}" class="bot-avatar">
                                             <div class="message-content">
-                                            ${getUserTimeOfDay()}, <?php echo htmlspecialchars($username); ?>! <?php echo htmlspecialchars($default_greeting); ?>
+                                            ${greeting}, <?php echo htmlspecialchars($username); ?>! <?php echo htmlspecialchars($default_greeting); ?>
                                                 <div class="message-time">Vừa xong</div>
                                             </div>
                                         </div>

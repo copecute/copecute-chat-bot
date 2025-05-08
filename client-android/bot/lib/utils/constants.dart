@@ -4,12 +4,21 @@ class AppConstants {
   static const String apiUrl = '$baseUrl/api';
 
   // API endpoints cụ thể
-  static const String loginEndpoint = '$apiUrl/login.php';
-  static const String registerEndpoint = '$apiUrl/register.php';
-  static const String googleLoginEndpoint = '$apiUrl/google_login.php';
-  static const String chatEndpoint = '$apiUrl/chat.php';
-  static const String teachEndpoint = '$apiUrl/teach.php';
-  static const String historyEndpoint = '$apiUrl/history.php';
+  static const String loginEndpoint = '$apiUrl/auth/login.php';
+  static const String registerEndpoint = '$apiUrl/auth/register.php';
+  static const String googleLoginEndpoint = '$apiUrl/auth/google_login.php';
+  static const String chatEndpoint = '$apiUrl/chat/chat.php';
+
+  // Nhiều endpoints khác nhau cho dạy bot để thử nghiệm
+  static const String teachEndpoint =
+      '$apiUrl/chat/teach.php'; // Endpoint API chính
+  static const String teachWebEndpoint =
+      '$baseUrl/chat/teachbot_controller.php'; // Endpoint web
+  static const String teachBackupEndpoint =
+      '$apiUrl/teach_bot.php'; // Endpoint backup
+
+  static const String historyEndpoint = '$apiUrl/chat/history.php';
+  static const String clearHistoryEndpoint = '$apiUrl/chat/clear_messages.php';
 
   // Thông tin ứng dụng
   static const String appName = 'Copecute';

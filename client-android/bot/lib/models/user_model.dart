@@ -7,6 +7,7 @@ class User {
   final String? avatar;
   final String token;
   final int quota;
+  final String? bio;
 
   User({
     required this.userId,
@@ -17,6 +18,7 @@ class User {
     this.avatar,
     required this.token,
     required this.quota,
+    this.bio,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -29,6 +31,7 @@ class User {
       avatar: json['avatar']?.toString(),
       token: json['token'].toString(),
       quota: int.parse(json['quota'].toString()),
+      bio: json['bio']?.toString(),
     );
   }
 
@@ -42,6 +45,7 @@ class User {
       'avatar': avatar,
       'token': token,
       'quota': quota,
+      'bio': bio,
     };
   }
 }
