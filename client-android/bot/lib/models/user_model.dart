@@ -8,6 +8,11 @@ class User {
   final String token;
   final int quota;
   final String? bio;
+  final String? phone;
+  final String gender;
+  final String? birthday;
+  final String? address;
+  final String? createdAt;
 
   User({
     required this.userId,
@@ -19,6 +24,11 @@ class User {
     required this.token,
     required this.quota,
     this.bio,
+    this.phone,
+    this.gender = 'other',
+    this.birthday,
+    this.address,
+    this.createdAt,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -27,11 +37,16 @@ class User {
       username: json['username'].toString(),
       email: json['email'].toString(),
       level: int.parse(json['level'].toString()),
-      fullName: json['full_name'].toString(),
+      fullName: json['full_name']?.toString() ?? '',
       avatar: json['avatar']?.toString(),
       token: json['token'].toString(),
       quota: int.parse(json['quota'].toString()),
       bio: json['bio']?.toString(),
+      phone: json['phone']?.toString(),
+      gender: json['gender']?.toString() ?? 'other',
+      birthday: json['birthday']?.toString(),
+      address: json['address']?.toString(),
+      createdAt: json['created_at']?.toString(),
     );
   }
 
@@ -46,6 +61,11 @@ class User {
       'token': token,
       'quota': quota,
       'bio': bio,
+      'phone': phone,
+      'gender': gender,
+      'birthday': birthday,
+      'address': address,
+      'created_at': createdAt,
     };
   }
 }

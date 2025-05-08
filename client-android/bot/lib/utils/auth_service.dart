@@ -3,54 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-
-class User {
-  final int userId;
-  final String username;
-  final String email;
-  final int level;
-  final String fullName;
-  final String? avatar;
-  final String token;
-  final int quota;
-
-  User({
-    required this.userId,
-    required this.username,
-    required this.email,
-    required this.level,
-    required this.fullName,
-    required this.avatar,
-    required this.token,
-    required this.quota,
-  });
-
-  factory User.fromJson(Map<String, dynamic> json) {
-    return User(
-      userId: json['user_id'],
-      username: json['username'],
-      email: json['email'],
-      level: json['level'],
-      fullName: json['full_name'],
-      avatar: json['avatar'],
-      token: json['token'],
-      quota: json['quota'],
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'user_id': userId,
-      'username': username,
-      'email': email,
-      'level': level,
-      'full_name': fullName,
-      'avatar': avatar,
-      'token': token,
-      'quota': quota,
-    };
-  }
-}
+import '../models/user_model.dart';
 
 class AuthService extends ChangeNotifier {
   User? _currentUser;
@@ -190,5 +143,53 @@ class AuthService extends ChangeNotifier {
   void clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  // Cập nhật thông tin người dùng
+  void updateUser(User user) {
+    _currentUser = user;
+    _saveUserToPrefs(user);
+    notifyListeners();
+  }
+
+  // Cập nhật thông tin hồ sơ người dùng
+  Future<bool> updateUserProfile(Map<String, dynamic> userData) async {
+    if (_currentUser == null) return false;
+
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      // Tạo user mới với thông tin cập nhật
+      final updatedUser = User(
+        userId: _currentUser!.userId,
+        username: _currentUser!.username,
+        email: _currentUser!.email,
+        level: _currentUser!.level,
+        fullName: userData['full_name'] ?? _currentUser!.fullName,
+        avatar: userData['avatar'] ?? _currentUser!.avatar,
+        token: _currentUser!.token,
+        quota: _currentUser!.quota,
+        bio: userData['bio'] ?? _currentUser!.bio,
+        phone: userData['phone'] ?? _currentUser!.phone,
+        gender: userData['gender'] ?? _currentUser!.gender,
+        birthday: userData['birthday'] ?? _currentUser!.birthday,
+        address: userData['address'] ?? _currentUser!.address,
+        createdAt: _currentUser!.createdAt,
+      );
+
+      // Cập nhật người dùng
+      _currentUser = updatedUser;
+      _saveUserToPrefs(updatedUser);
+
+      return true;
+    } catch (e) {
+      _errorMessage = 'Lỗi cập nhật thông tin: $e';
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 }

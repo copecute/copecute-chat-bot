@@ -32,4 +32,10 @@ class AppConstants {
   // URL dành cho môi trường phát triển (dev)
   static const String devBaseUrl = 'http://10.0.2.2/simsimi';
   static const String devApiUrl = '$devBaseUrl/api';
+
+  // API Endpoint cho profile
+  static String get profileEndpoint => '$baseUrl/api/profile/index.php';
+  static String get profileUpdateEndpoint => '$baseUrl/api/profile/update.php';
+  static String get changePasswordEndpoint =>
+      '$baseUrl/api/profile/change_password.php';
 }

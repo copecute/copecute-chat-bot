@@ -7,7 +7,7 @@ import '../models/message.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/typing_indicator.dart';
 import '../providers/settings_provider.dart';
-import '../services/auth_service.dart';
+import '../utils/auth_service.dart';
 import '../services/chat_service.dart';
 import 'login_screen.dart';
 import 'settings_screen.dart';

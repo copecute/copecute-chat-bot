@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/message.dart';
 import 'package:intl/intl.dart';
-import '../services/auth_service.dart';
+import '../utils/auth_service.dart';
 import 'package:provider/provider.dart';
 
 class ChatBubble extends StatelessWidget {

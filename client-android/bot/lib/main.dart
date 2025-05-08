@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'services/auth_service.dart';
+import 'utils/auth_service.dart';
 import 'services/chat_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/chat_screen.dart';
@@ -8,6 +8,7 @@ import 'screens/profile_screen.dart';
 import 'screens/settings_screen.dart';
 import 'providers/settings_provider.dart';
 import 'utils/app_theme.dart';
+import 'services/profile_service.dart';
 
 void main() {
   runApp(const MyApp());
@@ -23,6 +24,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => AuthService()),
         ChangeNotifierProvider(create: (context) => SettingsProvider()),
         ChangeNotifierProvider(create: (context) => ChatService()),
+        ChangeNotifierProvider(create: (context) => ProfileService()),
       ],
       child: Consumer2<AuthService, SettingsProvider>(
         builder: (context, authService, settingsProvider, _) {
