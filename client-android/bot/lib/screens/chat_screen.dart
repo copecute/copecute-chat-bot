@@ -599,7 +599,8 @@ class _ChatScreenState extends State<ChatScreen> {
       });
 
       try {
-        final success = await chatService.clearChatHistory(token, context);
+        // Sử dụng clearChatHistory nhưng KHÔNG truyền context để tránh lỗi Provider
+        final success = await chatService.clearChatHistory(token);
         if (success) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -648,288 +649,720 @@ class _ChatScreenState extends State<ChatScreen> {
     final chatService = Provider.of<ChatService>(context);
     final messages = chatService.messages;
 
+    // Tạo gradient màu chủ đạo
+    final primaryGradient = LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: isDarkMode
+          ? [const Color(0xFF1A237E), const Color(0xFF0D47A1)]
+          : [const Color(0xFF42A5F5), const Color(0xFF2196F3)],
+    );
+
+    // Màu sắc chủ đạo
+    final primaryColor =
+        isDarkMode ? const Color(0xFF2979FF) : const Color(0xFF2196F3);
+    final secondaryColor =
+        isDarkMode ? const Color(0xFF64B5F6) : const Color(0xFF90CAF9);
+    final backgroundColor =
+        isDarkMode ? const Color(0xFF0A0E21) : const Color(0xFFF5F9FF);
+    final cardColor = isDarkMode ? const Color(0xFF1A1D33) : Colors.white;
+    final inputBgColor =
+        isDarkMode ? const Color(0xFF272B40) : const Color(0xFFE3F2FD);
+
+    // Sắc thái sáng tối
+    final lightShade = isDarkMode
+        ? Colors.white.withOpacity(0.05)
+        : Colors.black.withOpacity(0.05);
+    final shadowColor = isDarkMode ? Colors.black54 : Colors.black12;
+
     return Scaffold(
-      backgroundColor:
-          isDarkMode ? const Color(0xFF121212) : const Color(0xFFF2F2F2),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-        leading: CircleAvatar(
-          radius: 18,
-          backgroundColor: const Color(0xFFE4E6EB).withOpacity(0.3),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: Image.asset(
-              'assets/images/bot_avatar.png',
-              width: 36,
-              height: 36,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => const Icon(
-                Icons.smart_toy_rounded,
-                color: messengerBlue,
-                size: 20,
-              ),
-            ),
-          ),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Copecute',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              'Hoạt động',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.normal,
-                color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          // Nút tải lại lịch sử
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Tải lại lịch sử',
-            onPressed: _loadChatHistory,
-          ),
-          // Nút xóa tin nhắn
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            onPressed: chatService.messages.isEmpty ? null : _clearMessages,
-            tooltip: 'Xóa tất cả tin nhắn',
-          ),
-          // Nút dạy bot
-          IconButton(
-            icon: const Icon(Icons.lightbulb_outline),
-            tooltip: 'Dạy bot',
-            onPressed: () {
-              // Hiển thị hộp thoại dạy bot với chuỗi rỗng
-              _showTeachBotForMessage('');
-            },
-          ),
-        ],
-      ),
+      backgroundColor: backgroundColor,
       body: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
-          child: Column(
-            children: [
-              // Thông báo lỗi nếu có
-              if (chatService.errorMessage != null)
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  color: Colors.red.shade100,
-                  child: Row(
-                    children: [
-                      const Icon(Icons.error_outline, color: Colors.red),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          chatService.errorMessage!,
-                          style: TextStyle(color: Colors.red.shade900),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () {
-                          chatService.clearError();
-                        },
-                        color: Colors.red.shade900,
-                        iconSize: 16,
-                      ),
-                    ],
+        child: Column(
+          children: [
+            // Header mới với thiết kế đẹp hơn và avatar người dùng - không bo tròn ở dưới
+            Container(
+              decoration: BoxDecoration(
+                gradient: primaryGradient,
+                boxShadow: [
+                  BoxShadow(
+                    color: shadowColor,
+                    blurRadius: 10,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 4),
                   ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  left: 16.0,
+                  right: 16.0,
+                  top: 12.0,
+                  bottom: 16.0,
                 ),
-
-              // Chat messages
-              Expanded(
-                child: _isLoading
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            CircularProgressIndicator(
-                              color: messengerBlue,
+                child: Row(
+                  children: [
+                    // Avatar bot
+                    Container(
+                      height: 50,
+                      width: 50,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(25),
+                        border: Border.all(color: Colors.white, width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: shadowColor,
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(25),
+                        child: Image.asset(
+                          'assets/images/bot_avatar.png',
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: secondaryColor,
+                            child: const Icon(
+                              Icons.smart_toy_rounded,
+                              color: Colors.white,
+                              size: 30,
                             ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Đang tải tin nhắn...',
-                              style: TextStyle(
-                                color: isDarkMode
-                                    ? Colors.grey.shade400
-                                    : Colors.grey.shade600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Thông tin
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Text(
+                                'Copecute',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
+                              const SizedBox(width: 4),
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: Colors.greenAccent,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Hoạt động',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white.withOpacity(0.8),
                             ),
-                          ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Menu nút actions
+                    Row(
+                      children: [
+                        _buildHeaderButton(
+                          icon: Icons.refresh,
+                          tooltip: 'Tải lại lịch sử',
+                          onPressed: _loadChatHistory,
                         ),
-                      )
-                    : Container(
-                        decoration: BoxDecoration(
-                          color: isDarkMode
-                              ? const Color(0xFF121212)
-                              : const Color(0xFFF2F2F2),
-                          image: settings.useCustomBackground
-                              ? DecorationImage(
-                                  image: () {
-                                    // Debug
-                                    debugPrint(
-                                        'useCustomBackground: ${settings.useCustomBackground}');
-                                    debugPrint(
-                                        'customBackgroundImagePath: ${settings.customBackgroundImagePath}');
+                        _buildHeaderButton(
+                          icon: Icons.delete_outline,
+                          tooltip: 'Xóa tin nhắn',
+                          onPressed: chatService.messages.isEmpty
+                              ? null
+                              : _clearMessages,
+                          disabled: chatService.messages.isEmpty,
+                        ),
+                        _buildHeaderButton(
+                          icon: Icons.lightbulb_outline,
+                          tooltip: 'Dạy bot',
+                          onPressed: () => _showTeachBotForMessage(''),
+                        ),
+                        // Avatar người dùng với menu
+                        PopupMenuButton(
+                          offset: const Offset(0, 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          color: cardColor,
+                          itemBuilder: (BuildContext context) {
+                            // Xác định các màu sắc cho menu
+                            final isDarkMode =
+                                Theme.of(context).brightness == Brightness.dark;
+                            final textColor =
+                                isDarkMode ? Colors.white : Colors.black87;
+                            final subtitleColor = isDarkMode
+                                ? Colors.grey.shade400
+                                : Colors.grey.shade600;
+                            final dividerColor = isDarkMode
+                                ? Colors.grey.shade800
+                                : Colors.grey.shade200;
+                            final primaryColor = isDarkMode
+                                ? const Color(0xFF2979FF)
+                                : const Color(0xFF2196F3);
 
-                                    if (settings.customBackgroundImagePath !=
-                                        null) {
-                                      return FileImage(File(settings
-                                              .customBackgroundImagePath!))
-                                          as ImageProvider;
-                                    } else {
-                                      String assetPath = isDarkMode
-                                          ? 'assets/images/bg-chat-dark.png'
-                                          : 'assets/images/bg-chat-light.png';
-                                      debugPrint(
-                                          'Using asset image: $assetPath');
-                                      return AssetImage(assetPath);
-                                    }
-                                  }(),
-                                  repeat:
-                                      settings.customBackgroundImagePath != null
-                                          ? ImageRepeat.noRepeat
-                                          : ImageRepeat.repeat,
-                                  opacity: settings.backgroundOpacity,
-                                  fit:
-                                      settings.customBackgroundImagePath != null
-                                          ? BoxFit.cover
-                                          : null,
-                                )
-                              : null,
-                        ),
-                        child: messages.isEmpty
-                            ? Center(
+                            return [
+                              // Header với thông tin người dùng
+                              PopupMenuItem(
+                                enabled: false,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
                                 child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Container(
-                                      width: 100,
-                                      height: 100,
-                                      decoration: BoxDecoration(
-                                        color: isDarkMode
-                                            ? Colors.grey.shade800
-                                            : Colors.grey.shade200,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(
-                                        Icons.chat_bubble_outline_rounded,
-                                        size: 50,
-                                        color: isDarkMode
-                                            ? Colors.grey.shade600
-                                            : Colors.grey.shade400,
-                                      ),
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 50,
+                                          height: 50,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                                color: primaryColor, width: 2),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(25),
+                                            child: user?.avatar != null
+                                                ? Image.network(
+                                                    user!.avatar!,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder:
+                                                        (_, __, ___) =>
+                                                            Container(
+                                                      color: primaryColor
+                                                          .withOpacity(0.7),
+                                                      child: const Icon(
+                                                        Icons.person,
+                                                        color: Colors.white,
+                                                        size: 30,
+                                                      ),
+                                                    ),
+                                                  )
+                                                : Container(
+                                                    color: primaryColor
+                                                        .withOpacity(0.7),
+                                                    child: const Icon(
+                                                      Icons.person,
+                                                      color: Colors.white,
+                                                      size: 30,
+                                                    ),
+                                                  ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                user?.fullName ?? 'Người dùng',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: textColor,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                user?.email ?? '',
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  color: subtitleColor,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(height: 16),
+                                    const SizedBox(height: 12),
+                                    Divider(color: dividerColor, height: 1),
+                                  ],
+                                ),
+                              ),
+
+                              // Trang cá nhân
+                              PopupMenuItem(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
+                                onTap: () {
+                                  // Delay để đảm bảo menu đã đóng trước khi chuyển trang
+                                  Future.delayed(
+                                      const Duration(milliseconds: 50), () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const ProfileScreen(),
+                                      ),
+                                    );
+                                  });
+                                },
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.person_outline,
+                                        color: primaryColor, size: 20),
+                                    const SizedBox(width: 12),
                                     Text(
-                                      'Hãy bắt đầu cuộc trò chuyện!',
+                                      'Trang cá nhân',
                                       style: TextStyle(
-                                        color: isDarkMode
-                                            ? Colors.grey.shade400
-                                            : Colors.grey.shade600,
-                                        fontSize: 16,
+                                        fontSize: 15,
+                                        color: textColor,
                                       ),
                                     ),
                                   ],
                                 ),
-                              )
-                            : Stack(
-                                children: [
-                                  // Tin nhắn
-                                  ListView.builder(
-                                    controller: _scrollController,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 16,
-                                    ),
-                                    itemCount: messages.length,
-                                    itemBuilder: (context, index) {
-                                      final message = messages[index];
-                                      final showAvatar = index == 0 ||
-                                          messages[index - 1].isSentByUser !=
-                                              message.isSentByUser;
+                              ),
 
-                                      return Padding(
-                                        padding:
-                                            const EdgeInsets.only(bottom: 4.0),
-                                        child: ChatBubble(
-                                          message: message,
-                                          showAvatar: showAvatar,
-                                          fontSize: settings.fontSize,
-                                          onTeachBot: message
-                                                      .isDefaultResponse &&
-                                                  !message.isSentByUser
-                                              ? () => _showTeachBotForMessage(
-                                                  messages[index - 1].text)
-                                              : null,
-                                        ),
-                                      );
-                                    },
-                                  ),
-
-                                  // Hiệu ứng đang nhập
-                                  if (chatService.isTyping)
-                                    Positioned(
-                                      bottom: 0,
-                                      left: 16,
-                                      child: Padding(
-                                        padding:
-                                            const EdgeInsets.only(bottom: 8.0),
-                                        child: TypingIndicator(),
+                              // Cài đặt
+                              PopupMenuItem(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
+                                onTap: () {
+                                  Future.delayed(
+                                      const Duration(milliseconds: 50), () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const SettingsScreen(),
+                                      ),
+                                    );
+                                  });
+                                },
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.settings_outlined,
+                                        color: primaryColor, size: 20),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'Cài đặt',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        color: textColor,
                                       ),
                                     ),
-                                ],
+                                  ],
+                                ),
                               ),
-                      ),
-              ),
 
-              // Input area
-              Container(
-                padding: EdgeInsets.only(
-                  left: 8.0,
-                  right: 8.0,
-                  top: 8.0,
-                  bottom: MediaQuery.of(context).padding.bottom +
-                      8.0, // Thêm padding bottom để không bị vướng thanh điều hướng
-                ),
-                decoration: BoxDecoration(
-                  color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      spreadRadius: 1,
-                      blurRadius: 3,
-                      offset: const Offset(0, -1),
+                              // Đăng xuất
+                              PopupMenuItem(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
+                                onTap: () async {
+                                  Future.delayed(
+                                      const Duration(milliseconds: 50),
+                                      () async {
+                                    bool confirmLogout = await showDialog(
+                                          context: context,
+                                          builder:
+                                              (BuildContext dialogContext) {
+                                            return AlertDialog(
+                                              title: const Text(
+                                                  'Xác nhận đăng xuất'),
+                                              content: const Text(
+                                                  'Bạn có chắc chắn muốn đăng xuất?'),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () => Navigator.of(
+                                                          dialogContext)
+                                                      .pop(false),
+                                                  child: const Text('Hủy'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () => Navigator.of(
+                                                          dialogContext)
+                                                      .pop(true),
+                                                  style: TextButton.styleFrom(
+                                                    foregroundColor: Colors.red,
+                                                  ),
+                                                  child:
+                                                      const Text('Đăng xuất'),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        ) ??
+                                        false;
+
+                                    if (confirmLogout) {
+                                      await authService.signOut();
+                                      // Chuyển đến trang đăng nhập sau khi đăng xuất
+                                      if (context.mounted) {
+                                        Navigator.of(context)
+                                            .pushAndRemoveUntil(
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const LoginScreen()),
+                                          (route) => false,
+                                        );
+                                      }
+                                    }
+                                  });
+                                },
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.logout,
+                                        color: Colors.red, size: 20),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'Đăng xuất',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ];
+                          },
+                          child: Container(
+                            height: 40,
+                            width: 40,
+                            margin: const EdgeInsets.only(left: 8),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 6,
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: user?.avatar != null &&
+                                      user!.avatar!.isNotEmpty
+                                  ? Image.network(
+                                      user.avatar!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Container(
+                                        color: primaryColor.withOpacity(0.7),
+                                        child: Icon(
+                                          Icons.person,
+                                          color: Colors.white,
+                                          size: 24,
+                                        ),
+                                      ),
+                                    )
+                                  : Container(
+                                      color: primaryColor.withOpacity(0.7),
+                                      child: const Icon(
+                                        Icons.person,
+                                        color: Colors.white,
+                                        size: 24,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
+              ),
+            ),
+
+            // Chat messages area
+            Expanded(
+              child: _isLoading
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: cardColor,
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: shadowColor,
+                                  blurRadius: 12,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                SizedBox(
+                                  width: 50,
+                                  height: 50,
+                                  child: CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        primaryColor),
+                                    strokeWidth: 3,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Đang tải tin nhắn...',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 16,
+                                    color: isDarkMode
+                                        ? Colors.white
+                                        : Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : Container(
+                      decoration: BoxDecoration(
+                        image: settings.useCustomBackground
+                            ? DecorationImage(
+                                image: () {
+                                  debugPrint(
+                                      'useCustomBackground: ${settings.useCustomBackground}');
+                                  debugPrint(
+                                      'customBackgroundImagePath: ${settings.customBackgroundImagePath}');
+
+                                  if (settings.customBackgroundImagePath !=
+                                      null) {
+                                    return FileImage(File(settings
+                                            .customBackgroundImagePath!))
+                                        as ImageProvider;
+                                  } else {
+                                    String assetPath = isDarkMode
+                                        ? 'assets/images/bg-chat-dark.png'
+                                        : 'assets/images/bg-chat-light.png';
+                                    debugPrint('Using asset image: $assetPath');
+                                    return AssetImage(assetPath);
+                                  }
+                                }(),
+                                repeat:
+                                    settings.customBackgroundImagePath != null
+                                        ? ImageRepeat.noRepeat
+                                        : ImageRepeat.repeat,
+                                opacity: settings.backgroundOpacity,
+                                fit: settings.customBackgroundImagePath != null
+                                    ? BoxFit.cover
+                                    : null,
+                              )
+                            : null,
+                      ),
+                      child: messages.isEmpty
+                          ? Center(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 24, vertical: 32),
+                                decoration: BoxDecoration(
+                                  color: cardColor.withOpacity(0.8),
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: shadowColor,
+                                      blurRadius: 15,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            primaryColor.withOpacity(0.7),
+                                            secondaryColor.withOpacity(0.7)
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.chat_bubble_outline_rounded,
+                                        size: 50,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                    Text(
+                                      'Hãy bắt đầu cuộc trò chuyện!',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: isDarkMode
+                                            ? Colors.white
+                                            : Colors.black87,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'Nhập tin nhắn ở phía dưới để trò chuyện với Bot',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: isDarkMode
+                                            ? Colors.grey.shade400
+                                            : Colors.grey.shade700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: isDarkMode
+                                            ? Colors.grey.shade800
+                                            : Colors.grey.shade200,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Text(
+                                        'Gợi ý: Tôi có thể hỏi Bot về ngày tháng, thời tiết, tiếng Anh...',
+                                        style: TextStyle(fontSize: 13),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : Stack(
+                              children: [
+                                // Tin nhắn - đã loại bỏ padding bottom để khắc phục "bức tường vô hình"
+                                ListView.builder(
+                                  controller: _scrollController,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 16,
+                                  ),
+                                  itemCount: messages.length,
+                                  itemBuilder: (context, index) {
+                                    final message = messages[index];
+                                    final showAvatar = index == 0 ||
+                                        messages[index - 1].isSentByUser !=
+                                            message.isSentByUser;
+                                    // Hiển thị ngày mới
+                                    bool showDateHeader = false;
+                                    String? dateHeader;
+
+                                    if (index == 0) {
+                                      showDateHeader = true;
+                                      dateHeader =
+                                          _formatDateHeader(message.timestamp);
+                                    } else {
+                                      final prevDate = _formatDate(
+                                          messages[index - 1].timestamp);
+                                      final currDate =
+                                          _formatDate(message.timestamp);
+                                      if (prevDate != currDate) {
+                                        showDateHeader = true;
+                                        dateHeader = _formatDateHeader(
+                                            message.timestamp);
+                                      }
+                                    }
+
+                                    return Column(
+                                      children: [
+                                        if (showDateHeader)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              top: 8.0,
+                                              bottom: 16.0,
+                                            ),
+                                            child:
+                                                _buildDateHeader(dateHeader!),
+                                          ),
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              bottom: 4.0),
+                                          child: ChatBubble(
+                                            message: message,
+                                            showAvatar: showAvatar,
+                                            fontSize: settings.fontSize,
+                                            onTeachBot: message
+                                                        .isDefaultResponse &&
+                                                    !message.isSentByUser
+                                                ? () => _showTeachBotForMessage(
+                                                    index > 0
+                                                        ? messages[index - 1]
+                                                            .text
+                                                        : '')
+                                                : null,
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+
+                                // Hiệu ứng đang nhập - điều chỉnh vị trí để hiển thị phía trên ô nhập tin nhắn
+                                if (chatService.isTyping)
+                                  Positioned(
+                                    bottom: 4,
+                                    left: 16,
+                                    child: TypingIndicator(),
+                                  ),
+                              ],
+                            ),
+                    ),
+            ),
+
+            // Input area - đảm bảo không có padding dư
+            Container(
+              decoration: BoxDecoration(
+                color: backgroundColor,
+                boxShadow: [
+                  BoxShadow(
+                    color: shadowColor,
+                    blurRadius: 4,
+                    offset: const Offset(0, -1),
+                  ),
+                ],
+              ),
+              padding: EdgeInsets.only(
+                left: 16.0,
+                right: 16.0,
+                top: 8.0,
+                bottom: MediaQuery.of(context).padding.bottom + 8.0,
+              ),
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: Colors.grey.shade300,
+                    width: 1,
+                  ),
+                ),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        decoration: BoxDecoration(
-                          color: isDarkMode
-                              ? const Color(0xFF2C2C2C)
-                              : const Color(0xFFEFF2F5),
-                          borderRadius: BorderRadius.circular(24),
-                        ),
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 16),
                         child: TextField(
                           controller: _messageController,
                           focusNode: _focusNode,
+                          maxLines: 1,
                           onChanged: (value) {
                             if (settings.enterToSend && value.endsWith('\n')) {
                               _messageController.text =
@@ -947,52 +1380,128 @@ class _ChatScreenState extends State<ChatScreen> {
                           decoration: InputDecoration(
                             hintText: 'Nhập tin nhắn...',
                             border: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            errorBorder: InputBorder.none,
+                            disabledBorder: InputBorder.none,
                             hintStyle: TextStyle(
-                              color: isDarkMode
-                                  ? Colors.grey.shade500
-                                  : Colors.grey.shade600,
+                              color: Colors.grey.shade400,
+                              fontSize: 16,
                             ),
+                            contentPadding:
+                                const EdgeInsets.symmetric(vertical: 10),
                           ),
-                          style: TextStyle(
-                            fontSize: settings.fontSize,
-                            color: isDarkMode ? Colors.white : Colors.black,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.black87,
                           ),
                           textCapitalization: TextCapitalization.sentences,
-                          keyboardType: TextInputType.multiline,
-                          maxLines: null,
-                          textInputAction: settings.enterToSend
-                              ? TextInputAction.send
-                              : TextInputAction.newline,
+                          keyboardType: TextInputType.text,
+                          textInputAction: TextInputAction.send,
                           onSubmitted: (value) {
-                            if (settings.enterToSend) {
+                            if (value.isNotEmpty) {
                               _sendMessage();
                             }
                           },
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
                     Container(
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: messengerBlue,
-                      ),
+                      margin: const EdgeInsets.only(right: 8),
                       child: IconButton(
-                        icon: const Icon(Icons.send_rounded),
-                        color: Colors.white,
-                        padding: const EdgeInsets.all(0),
-                        constraints: const BoxConstraints(
-                          minWidth: 40,
-                          minHeight: 40,
+                        icon: Icon(
+                          Icons.send_rounded,
+                          color: primaryColor,
+                          size: 22,
                         ),
-                        onPressed: _sendMessage,
+                        onPressed: () {
+                          if (_messageController.text.trim().isNotEmpty) {
+                            _sendMessage();
+                          }
+                        },
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Tạo nút header có animation đẹp
+  Widget _buildHeaderButton({
+    required IconData icon,
+    required String tooltip,
+    required Function()? onPressed,
+    bool disabled = false,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: onPressed,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Icon(
+                icon,
+                color: disabled
+                    ? Colors.white.withOpacity(0.3)
+                    : Colors.white.withOpacity(0.9),
+                size: 22,
+              ),
+            ),
           ),
+        ),
+      ),
+    );
+  }
+
+  // Định dạng ngày tháng để hiển thị header
+  String _formatDate(DateTime date) {
+    return '${date.year}-${date.month}-${date.day}';
+  }
+
+  // Định dạng header hiển thị ngày
+  String _formatDateHeader(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = DateTime(now.year, now.month, now.day - 1);
+    final messageDate = DateTime(date.year, date.month, date.day);
+
+    if (messageDate == today) {
+      return 'Hôm nay';
+    } else if (messageDate == yesterday) {
+      return 'Hôm qua';
+    } else {
+      return '${date.day} tháng ${date.month}, ${date.year}';
+    }
+  }
+
+  // Tạo widget hiển thị ngày tháng
+  Widget _buildDateHeader(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.white.withOpacity(0.1)
+            : Colors.black.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white.withOpacity(0.7)
+              : Colors.black54,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );

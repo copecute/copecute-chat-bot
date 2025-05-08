@@ -513,17 +513,10 @@ class ChatService extends ChangeNotifier {
           // Xóa tin nhắn trong bộ nhớ
           _messages.clear();
 
-          // Lấy tên người dùng nếu có context
-          String? username;
-          if (context != null && context.mounted) {
-            final authService =
-                Provider.of<AuthService>(context, listen: false);
-            username = authService.currentUser?.fullName;
-          }
-
-          // Thêm tin nhắn chào mừng mới
+          // Thêm tin nhắn chào mừng mới - không sử dụng username lấy từ Provider
           _addMessage(Message(
-            text: _getWelcomeMessage(username),
+            text: _getWelcomeMessage(
+                null), // Truyền null thay vì lấy từ AuthService
             isSentByUser: false,
             timestamp: DateTime.now(),
           ));
@@ -538,12 +531,8 @@ class ChatService extends ChangeNotifier {
         _messages.clear();
         notifyListeners();
 
-        // Đăng xuất và chuyển hướng nếu context được cung cấp và còn mounted
+        // Xử lý lỗi 401 nếu có context
         if (context != null && context.mounted) {
-          // Đăng xuất người dùng hiện tại
-          final authService = Provider.of<AuthService>(context, listen: false);
-          await authService.signOut();
-
           // Sử dụng Future.microtask để tránh lỗi lifecycle
           Future.microtask(() {
             if (context.mounted) {

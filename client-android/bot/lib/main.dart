@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'utils/auth_service.dart';
 import 'services/chat_service.dart';
@@ -36,6 +37,16 @@ class MyApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: settings.getThemeMode(),
+            locale: const Locale('vi', 'VN'),
+            supportedLocales: const [
+              Locale('vi', 'VN'),
+              Locale('en', 'US'),
+            ],
+            localizationsDelegates: [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
             home: authService.isLoading || !settingsProvider.isLoaded
                 ? const LoadingScreen()
                 : authService.isLoggedIn
@@ -69,7 +80,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
   static const Color messengerBlue = Color(0xFF0084FF);
 
   @override
@@ -77,56 +87,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
 
-    return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: const [
-          ChatScreen(),
-          ProfileScreen(),
-          SettingsScreen(),
-        ],
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              spreadRadius: 0,
-            ),
-          ],
-        ),
-        child: NavigationBar(
-          backgroundColor: backgroundColor,
-          selectedIndex: _selectedIndex,
-          onDestinationSelected: _onItemTapped,
-          indicatorColor: messengerBlue.withOpacity(0.2),
-          labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-          destinations: const <Widget>[
-            NavigationDestination(
-              icon: Icon(Icons.chat_bubble_outline),
-              selectedIcon: Icon(Icons.chat_bubble, color: messengerBlue),
-              label: 'Trò chuyện',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person, color: messengerBlue),
-              label: 'Cá nhân',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.settings_outlined),
-              selectedIcon: Icon(Icons.settings, color: messengerBlue),
-              label: 'Cài đặt',
-            ),
-          ],
-        ),
-      ),
+    return const Scaffold(
+      body: ChatScreen(),
     );
-  }
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
   }
 }
