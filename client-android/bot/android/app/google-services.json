@@ -1,0 +1,42 @@
+{ 
+  "project_info": { 
+    "project_number": "372915420416", 
+    "project_id": "copecute-app", 
+    "storage_bucket": "copecute-app.appspot.com" 
+  }, 
+  "client": [ 
+    { 
+      "client_info": { 
+        "mobilesdk_app_id": "1:372915420416:android:0000000000000000", 
+        "android_client_info": { 
+          "package_name": "com.copecute.bot" 
+        } 
+      }, 
+      "oauth_client": [ 
+        { 
+          "client_id": "372915420416-dkg8ht28i9p9qoog9diunlk2d1p2ovmt.apps.googleusercontent.com", 
+          "client_type": 3 
+        }, 
+        { 
+          "client_id": "372915420416-5ciis68kk1qlnv5eqv65nb4ajkjodtug.apps.googleusercontent.com", 
+          "client_type": 1, 
+          "android_info": { 
+            "package_name": "com.copecute.bot", 
+            "certificate_hash": "3B:79:01:10:CF:C8:4E:07:C7:46:0E:93:6A:21:7E:6E:33:77:36:4E" 
+          } 
+        } 
+      ], 
+      "api_key": [ 
+        { 
+          "current_key": "AIzaSyADXIJQ1m5U5IJ1_sqaKbilflIq3_Lxd2Q" 
+        } 
+      ], 
+      "services": { 
+        "appinvite_service": { 
+          "other_platform_oauth_client": [] 
+        } 
+      } 
+    } 
+  ], 
+  "configuration_version": "1" 
+} 

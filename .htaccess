@@ -1,0 +1,9 @@
+DirectoryIndex index.php
+RewriteEngine On
+
+# Chuyển hướng /folder sang /folder/index.php
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteCond %{REQUEST_FILENAME}/index.php -f
+RewriteRule ^(.+?)/?$ $1/index.php [L]
+
+RewriteRule ^([^./]+)$ $1.php [L]
