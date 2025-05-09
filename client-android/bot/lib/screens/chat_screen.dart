@@ -754,35 +754,60 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: Row(
                   children: [
                     // Avatar bot
-                    Container(
-                      height: 50,
-                      width: 50,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(25),
-                        border: Border.all(color: Colors.white, width: 2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: shadowColor,
-                            blurRadius: 8,
-                            spreadRadius: 1,
+                    Stack(
+                      children: [
+                        Container(
+                          height: 50,
+                          width: 50,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(25),
+                            border: Border.all(color: Colors.white, width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: shadowColor,
+                                blurRadius: 8,
+                                spreadRadius: 1,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(25),
-                        child: Image.asset(
-                          'assets/images/bot_avatar.png',
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            color: secondaryColor,
-                            child: const Icon(
-                              Icons.smart_toy_rounded,
-                              color: Colors.white,
-                              size: 30,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(25),
+                            child: Image.asset(
+                              'assets/images/bot_avatar.png',
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                color: secondaryColor,
+                                child: const Icon(
+                                  Icons.smart_toy_rounded,
+                                  color: Colors.white,
+                                  size: 30,
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                        // Nút trạng thái hoạt động
+                        Positioned(
+                          bottom: 2,
+                          right: 2,
+                          child: Container(
+                            width: 12,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: Colors.greenAccent,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Colors.white, width: 2),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 4,
+                                  spreadRadius: 0,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(width: 12),
                     // Thông tin
@@ -800,20 +825,11 @@ class _ChatScreenState extends State<ChatScreen> {
                                   color: Colors.white,
                                 ),
                               ),
-                              const SizedBox(width: 4),
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: Colors.greenAccent,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                              ),
                             ],
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Hoạt động',
+                            'Đang hoạt động',
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.white.withOpacity(0.8),
