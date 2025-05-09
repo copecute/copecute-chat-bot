@@ -144,8 +144,7 @@ class SettingsProvider extends ChangeNotifier {
     _settings = _settings.copyWith(
       customBackgroundImagePath: null,
       backgroundOpacity: AppSettings.defaultBackgroundOpacity,
-      useCustomBackground:
-          true, // Đảm bảo useCustomBackground = true để hiển thị hình nền mặc định
+      useCustomBackground: false, // Đặt về false để sử dụng hình nền mặc định
     );
 
     debugPrint(

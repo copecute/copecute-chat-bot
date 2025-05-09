@@ -28,6 +28,20 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isFirstLoad = true;
   bool _isLoading = false;
 
+  // Thêm hàm lấy lời chào theo thời gian
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 11) {
+      return 'Chào buổi sáng';
+    } else if (hour >= 11 && hour < 14) {
+      return 'Chào buổi trưa';
+    } else if (hour >= 14 && hour < 18) {
+      return 'Chào buổi chiều';
+    } else {
+      return 'Chào buổi tối';
+    }
+  }
+
   // Messenger blue color
   static const Color messengerBlue = Color(0xFF0084FF);
 
@@ -86,14 +100,18 @@ class _ChatScreenState extends State<ChatScreen> {
       // Truyền context cho ChatService để xử lý lỗi 401
       await chatService.fetchChatHistory(context);
 
-      // Nếu không có lỗi từ ChatService nhưng lịch sử chat trống
+      // Nếu không có lỗi từ ChatService và lịch sử chat trống, thêm tin nhắn chào mừng
       if (chatService.messages.isEmpty && chatService.errorMessage == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Không tìm thấy lịch sử chat nào'),
-            backgroundColor: Colors.orange,
-          ),
+        final user = authService.currentUser;
+        final greeting = _getGreeting();
+        final welcomeMessage = Message(
+          text:
+              '${greeting}, ${user?.fullName ?? user?.username ?? 'bạn'}! Tôi là Copecute. Bạn có thể hỏi tôi bất cứ điều gì!',
+          timestamp: DateTime.now(),
+          isSentByUser: false,
+          isDefaultResponse: false,
         );
+        chatService.addMessage(welcomeMessage);
       }
 
       // Nếu có lỗi, hiển thị thông báo
@@ -617,6 +635,18 @@ class _ChatScreenState extends State<ChatScreen> {
         final success = await chatService.clearChatHistory(context);
         if (success) {
           if (mounted) {
+            // Thêm tin nhắn chào mừng sau khi xóa thành công
+            final user = authService.currentUser;
+            final greeting = _getGreeting();
+            final welcomeMessage = Message(
+              text:
+                  '${greeting}, ${user?.fullName ?? user?.username ?? 'bạn'}! Tôi là Copecute. Bạn có thể hỏi tôi bất cứ điều gì!',
+              timestamp: DateTime.now(),
+              isSentByUser: false,
+              isDefaultResponse: false,
+            );
+            chatService.addMessage(welcomeMessage);
+
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Đã xóa tất cả tin nhắn'),
@@ -1146,196 +1176,130 @@ class _ChatScreenState extends State<ChatScreen> {
                     )
                   : Container(
                       decoration: BoxDecoration(
-                        image: settings.useCustomBackground
-                            ? DecorationImage(
-                                image: () {
-                                  debugPrint(
-                                      'useCustomBackground: ${settings.useCustomBackground}');
-                                  debugPrint(
-                                      'customBackgroundImagePath: ${settings.customBackgroundImagePath}');
+                        image: DecorationImage(
+                          image: () {
+                            debugPrint(
+                                'useCustomBackground: ${settings.useCustomBackground}');
+                            debugPrint(
+                                'customBackgroundImagePath: ${settings.customBackgroundImagePath}');
 
-                                  if (settings.customBackgroundImagePath !=
-                                      null) {
-                                    return FileImage(File(settings
-                                            .customBackgroundImagePath!))
-                                        as ImageProvider;
-                                  } else {
-                                    String assetPath = isDarkMode
-                                        ? 'assets/images/bg-chat-dark.png'
-                                        : 'assets/images/bg-chat-light.png';
-                                    debugPrint('Using asset image: $assetPath');
-                                    return AssetImage(assetPath);
-                                  }
-                                }(),
-                                repeat:
-                                    settings.customBackgroundImagePath != null
-                                        ? ImageRepeat.noRepeat
-                                        : ImageRepeat.repeat,
-                                opacity: settings.backgroundOpacity,
-                                fit: settings.customBackgroundImagePath != null
-                                    ? BoxFit.cover
-                                    : null,
-                              )
-                            : null,
+                            if (settings.useCustomBackground &&
+                                settings.customBackgroundImagePath != null) {
+                              return FileImage(
+                                      File(settings.customBackgroundImagePath!))
+                                  as ImageProvider;
+                            } else {
+                              String assetPath = isDarkMode
+                                  ? 'assets/images/bg-chat-dark.png'
+                                  : 'assets/images/bg-chat-light.png';
+                              debugPrint('Using asset image: $assetPath');
+                              return AssetImage(assetPath);
+                            }
+                          }(),
+                          repeat: settings.customBackgroundImagePath != null
+                              ? ImageRepeat.noRepeat
+                              : ImageRepeat.repeat,
+                          fit: settings.customBackgroundImagePath != null
+                              ? BoxFit.cover
+                              : null,
+                        ),
                       ),
-                      child: messages.isEmpty
-                          ? Center(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 24, vertical: 32),
-                                decoration: BoxDecoration(
-                                  color: cardColor.withOpacity(0.8),
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: shadowColor,
-                                      blurRadius: 15,
-                                      spreadRadius: 2,
-                                    ),
-                                  ],
-                                ),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(16),
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            primaryColor.withOpacity(0.7),
-                                            secondaryColor.withOpacity(0.7)
-                                          ],
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                        ),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.chat_bubble_outline_rounded,
-                                        size: 50,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 24),
-                                    Text(
-                                      'Hãy bắt đầu cuộc trò chuyện!',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: isDarkMode
-                                            ? Colors.white
-                                            : Colors.black87,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      'Nhập tin nhắn ở phía dưới để trò chuyện với Bot',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: isDarkMode
-                                            ? Colors.grey.shade400
-                                            : Colors.grey.shade700,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 16, vertical: 8),
-                                      decoration: BoxDecoration(
-                                        color: isDarkMode
-                                            ? Colors.grey.shade800
-                                            : Colors.grey.shade200,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: const Text(
-                                        'Gợi ý: Tôi có thể hỏi Bot về ngày tháng, thời tiết, tiếng Anh...',
-                                        style: TextStyle(fontSize: 13),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )
-                          : Stack(
-                              children: [
-                                // Tin nhắn - đã loại bỏ padding bottom để khắc phục "bức tường vô hình"
-                                ListView.builder(
-                                  controller: _scrollController,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 16,
+                      child: Stack(
+                        children: [
+                          // Overlay màu đen với opacity
+                          Positioned.fill(
+                            child: Container(
+                              color: Colors.black.withOpacity(isDarkMode
+                                      ? 1 -
+                                          settings
+                                              .backgroundOpacity // Đảo ngược opacity cho dark mode
+                                      : (1 - settings.backgroundOpacity) *
+                                          0.5 // Giảm một nửa opacity cho light mode
                                   ),
-                                  itemCount: messages.length,
-                                  itemBuilder: (context, index) {
-                                    final message = messages[index];
-                                    final showAvatar = index == 0 ||
-                                        messages[index - 1].isSentByUser !=
-                                            message.isSentByUser;
-                                    // Hiển thị ngày mới
-                                    bool showDateHeader = false;
-                                    String? dateHeader;
+                            ),
+                          ),
+                          // Chat messages
+                          Positioned.fill(
+                            child: messages.isEmpty
+                                ? const SizedBox()
+                                : ListView.builder(
+                                    controller: _scrollController,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 16,
+                                    ),
+                                    itemCount: messages.length,
+                                    itemBuilder: (context, index) {
+                                      final message = messages[index];
+                                      final showAvatar = index == 0 ||
+                                          messages[index - 1].isSentByUser !=
+                                              message.isSentByUser;
 
-                                    if (index == 0) {
-                                      showDateHeader = true;
-                                      dateHeader =
-                                          _formatDateHeader(message.timestamp);
-                                    } else {
-                                      final prevDate = _formatDate(
-                                          messages[index - 1].timestamp);
-                                      final currDate =
-                                          _formatDate(message.timestamp);
-                                      if (prevDate != currDate) {
+                                      bool showDateHeader = false;
+                                      String? dateHeader;
+
+                                      if (index == 0) {
                                         showDateHeader = true;
                                         dateHeader = _formatDateHeader(
                                             message.timestamp);
+                                      } else {
+                                        final prevDate = _formatDate(
+                                            messages[index - 1].timestamp);
+                                        final currDate =
+                                            _formatDate(message.timestamp);
+                                        if (prevDate != currDate) {
+                                          showDateHeader = true;
+                                          dateHeader = _formatDateHeader(
+                                              message.timestamp);
+                                        }
                                       }
-                                    }
 
-                                    return Column(
-                                      children: [
-                                        if (showDateHeader)
+                                      return Column(
+                                        children: [
+                                          if (showDateHeader)
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 8.0,
+                                                bottom: 16.0,
+                                              ),
+                                              child:
+                                                  _buildDateHeader(dateHeader!),
+                                            ),
                                           Padding(
                                             padding: const EdgeInsets.only(
-                                              top: 8.0,
-                                              bottom: 16.0,
+                                                bottom: 4.0),
+                                            child: ChatBubble(
+                                              message: message,
+                                              showAvatar: showAvatar,
+                                              fontSize: settings.fontSize,
+                                              onTeachBot: message
+                                                          .isDefaultResponse &&
+                                                      !message.isSentByUser
+                                                  ? () =>
+                                                      _showTeachBotForMessage(
+                                                          index > 0
+                                                              ? messages[
+                                                                      index - 1]
+                                                                  .text
+                                                              : '')
+                                                  : null,
                                             ),
-                                            child:
-                                                _buildDateHeader(dateHeader!),
                                           ),
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              bottom: 4.0),
-                                          child: ChatBubble(
-                                            message: message,
-                                            showAvatar: showAvatar,
-                                            fontSize: settings.fontSize,
-                                            onTeachBot: message
-                                                        .isDefaultResponse &&
-                                                    !message.isSentByUser
-                                                ? () => _showTeachBotForMessage(
-                                                    index > 0
-                                                        ? messages[index - 1]
-                                                            .text
-                                                        : '')
-                                                : null,
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                ),
-
-                                // Hiệu ứng đang nhập - điều chỉnh vị trí để hiển thị phía trên ô nhập tin nhắn
-                                if (chatService.isTyping)
-                                  Positioned(
-                                    bottom: 4,
-                                    left: 16,
-                                    child: TypingIndicator(),
+                                        ],
+                                      );
+                                    },
                                   ),
-                              ],
+                          ),
+
+                          // Hiệu ứng đang nhập
+                          if (chatService.isTyping)
+                            Positioned(
+                              bottom: 4,
+                              left: 16,
+                              child: TypingIndicator(),
                             ),
+                        ],
+                      ),
                     ),
             ),
 
@@ -1360,10 +1324,12 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Container(
                 height: 48,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: Colors.grey.shade300,
+                    color: isDarkMode
+                        ? Colors.grey.shade800
+                        : Colors.grey.shade300,
                     width: 1,
                   ),
                 ),
@@ -1399,15 +1365,17 @@ class _ChatScreenState extends State<ChatScreen> {
                             errorBorder: InputBorder.none,
                             disabledBorder: InputBorder.none,
                             hintStyle: TextStyle(
-                              color: Colors.grey.shade400,
+                              color: isDarkMode
+                                  ? Colors.grey.shade500
+                                  : Colors.grey.shade400,
                               fontSize: 16,
                             ),
                             contentPadding:
                                 const EdgeInsets.symmetric(vertical: 10),
                           ),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
-                            color: Colors.black87,
+                            color: isDarkMode ? Colors.white : Colors.black87,
                           ),
                           textCapitalization: TextCapitalization.sentences,
                           keyboardType: TextInputType.text,

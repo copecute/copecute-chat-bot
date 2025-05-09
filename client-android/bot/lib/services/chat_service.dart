@@ -132,6 +132,11 @@ class ChatService extends ChangeNotifier {
     });
   }
 
+  // Phương thức public để thêm tin nhắn
+  void addMessage(Message message) {
+    _addMessage(message);
+  }
+
   // Gửi tin nhắn và nhận phản hồi
   Future<Message?> sendMessage(String text, BuildContext context) async {
     try {
