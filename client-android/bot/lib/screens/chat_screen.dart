@@ -693,6 +693,13 @@ class _ChatScreenState extends State<ChatScreen> {
     final chatService = Provider.of<ChatService>(context);
     final messages = chatService.messages;
 
+    // Cập nhật SystemUiOverlayStyle dựa trên theme
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: isDarkMode ? Brightness.light : Brightness.dark,
+      statusBarBrightness: isDarkMode ? Brightness.dark : Brightness.light,
+    ));
+
     // Tạo gradient màu chủ đạo
     final primaryGradient = LinearGradient(
       begin: Alignment.topLeft,
@@ -1468,22 +1475,38 @@ class _ChatScreenState extends State<ChatScreen> {
 
   // Tạo widget hiển thị ngày tháng
   Widget _buildDateHeader(String text) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? Colors.white.withOpacity(0.1)
-            : Colors.black.withOpacity(0.05),
+        color: isDarkMode
+            ? const Color(0xFF2A3649) // Dark slate blue
+            : const Color(0xFFE0E7FF), // Indigo-100
         borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 4,
+            spreadRadius: 0,
+            offset: const Offset(0, 1),
+          ),
+        ],
+        border: Border.all(
+          color: isDarkMode
+              ? const Color(0xFF3E4C5E) // Lighter slate blue
+              : const Color(0xFFC7D2FE), // Indigo-200
+          width: 1,
+        ),
       ),
       child: Text(
         text,
         style: TextStyle(
-          fontSize: 12,
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white.withOpacity(0.7)
-              : Colors.black54,
-          fontWeight: FontWeight.w500,
+          fontSize: 13,
+          color:
+              isDarkMode ? Colors.white : const Color(0xFF312E81), // Indigo-900
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.3,
         ),
       ),
     );

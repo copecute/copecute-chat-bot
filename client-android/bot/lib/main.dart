@@ -10,13 +10,23 @@ import 'screens/settings_screen.dart';
 import 'providers/settings_provider.dart';
 import 'utils/app_theme.dart';
 import 'services/profile_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'screens/onboarding_screen.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Kiểm tra xem người dùng đã xem onboarding chưa
+  final prefs = await SharedPreferences.getInstance();
+  final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+
+  runApp(MyApp(hasSeenOnboarding: hasSeenOnboarding));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  final bool hasSeenOnboarding;
+
+  const MyApp({super.key, required this.hasSeenOnboarding});
 
   @override
   Widget build(BuildContext context) {
@@ -47,11 +57,9 @@ class MyApp extends StatelessWidget {
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
-            home: authService.isLoading || !settingsProvider.isLoaded
-                ? const LoadingScreen()
-                : authService.isLoggedIn
-                    ? const HomeScreen()
-                    : const LoginScreen(),
+            home: hasSeenOnboarding
+                ? const LoginScreen()
+                : const OnboardingScreen(),
           );
         },
       ),

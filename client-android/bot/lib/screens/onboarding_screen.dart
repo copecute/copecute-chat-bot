@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../utils/app_routes.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/onboarding_content.dart';
+import 'login_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -9,28 +11,14 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  final PageController _pageController = PageController();
-  int _currentPage = 0;
+  late PageController _pageController;
+  int _pageIndex = 0;
 
-  final List<OnboardingContent> _contents = [
-    OnboardingContent(
-      title: 'Chào mừng đến với Copecute',
-      description:
-          'Ứng dụng trò chuyện thông minh giúp bạn giao tiếp mọi lúc mọi nơi',
-      image: 'assets/images/onboarding1.png',
-    ),
-    OnboardingContent(
-      title: 'Trò chuyện thông minh',
-      description:
-          'Tương tác với Copecute, người bạn ảo thông minh, trả lời mọi câu hỏi của bạn',
-      image: 'assets/images/onboarding2.png',
-    ),
-    OnboardingContent(
-      title: 'Cá nhân hóa',
-      description: 'Tùy chỉnh Copecute theo sở thích và nhu cầu của bạn',
-      image: 'assets/images/onboarding3.png',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: 0);
+  }
 
   @override
   void dispose() {
@@ -38,85 +26,110 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
+  // Đánh dấu đã xem onboarding
+  void _completeOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasSeenOnboarding', true);
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
             Expanded(
-              flex: 3,
               child: PageView.builder(
                 controller: _pageController,
                 onPageChanged: (index) {
                   setState(() {
-                    _currentPage = index;
+                    _pageIndex = index;
                   });
                 },
-                itemCount: _contents.length,
-                itemBuilder: (context, index) {
-                  return OnboardingPage(content: _contents[index]);
-                },
+                itemCount: onboardingContents.length,
+                itemBuilder: (context, index) => OnboardingContent(
+                  image: onboardingContents[index].image,
+                  title: onboardingContents[index].title,
+                  description: onboardingContents[index].description,
+                ),
               ),
             ),
-            Expanded(
-              flex: 1,
-              child: Column(
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      _contents.length,
-                      (index) => buildDot(index),
+                  ...List.generate(
+                    onboardingContents.length,
+                    (index) => Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: DotIndicator(isActive: index == _pageIndex),
                     ),
                   ),
                   const Spacer(),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      children: [
-                        if (_currentPage > 0)
-                          TextButton(
-                            onPressed: () {
-                              _pageController.previousPage(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.ease,
-                              );
-                            },
-                            child: const Text('Trước'),
-                          ),
-                        const Spacer(),
-                        _currentPage == _contents.length - 1
-                            ? ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pushReplacementNamed(
-                                    context,
-                                    AppRoutes.login,
-                                  );
-                                },
-                                child: const Text('Bắt đầu'),
-                              )
-                            : ElevatedButton(
-                                onPressed: () {
-                                  _pageController.nextPage(
-                                    duration: const Duration(milliseconds: 300),
-                                    curve: Curves.ease,
-                                  );
-                                },
-                                child: const Text('Tiếp'),
-                              ),
+                  Container(
+                    height: 60,
+                    width: 60,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFFFF6B6B),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF6B6B).withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        ),
                       ],
                     ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(30),
+                        onTap: () {
+                          if (_pageIndex == onboardingContents.length - 1) {
+                            _completeOnboarding();
+                          } else {
+                            _pageController.nextPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.ease,
+                            );
+                          }
+                        },
+                        child: Center(
+                          child: Icon(
+                            _pageIndex == onboardingContents.length - 1
+                                ? Icons.check
+                                : Icons.arrow_forward,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 20),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushReplacementNamed(context, AppRoutes.login);
-                    },
-                    child: const Text('Bỏ qua'),
-                  ),
-                  const SizedBox(height: 20),
                 ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(
+                bottom: 16.0,
+                left: 16.0,
+                right: 16.0,
+              ),
+              child: TextButton(
+                onPressed: _completeOnboarding,
+                child: const Text(
+                  'Bỏ qua',
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 16,
+                  ),
+                ),
               ),
             ),
           ],
@@ -124,68 +137,75 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
     );
   }
-
-  Widget buildDot(int index) {
-    return Container(
-      margin: const EdgeInsets.only(right: 5),
-      height: 10,
-      width: _currentPage == index ? 25 : 10,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: _currentPage == index ? Colors.blue : Colors.grey,
-      ),
-    );
-  }
 }
 
-class OnboardingPage extends StatelessWidget {
-  final OnboardingContent content;
+class OnboardingContent extends StatelessWidget {
+  final String image;
+  final String title;
+  final String description;
 
-  const OnboardingPage({super.key, required this.content});
+  const OnboardingContent({
+    super.key,
+    required this.image,
+    required this.title,
+    required this.description,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(40.0),
+      padding: const EdgeInsets.all(20.0),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          const Spacer(),
           Image.asset(
-            content.image,
-            height: 200,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) => const Icon(
-              Icons.image_not_supported,
-              size: 200,
-              color: Colors.grey,
+            image,
+            height: 250,
+          ),
+          const Spacer(),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF1E1E1E),
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 16),
           Text(
-            content.title,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            description,
             textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.grey,
+              fontSize: 16,
+            ),
           ),
-          const SizedBox(height: 20),
-          Text(
-            content.description,
-            style: const TextStyle(fontSize: 16, color: Colors.grey),
-            textAlign: TextAlign.center,
-          ),
+          const Spacer(),
         ],
       ),
     );
   }
 }
 
-class OnboardingContent {
-  final String title;
-  final String description;
-  final String image;
-
-  OnboardingContent({
-    required this.title,
-    required this.description,
-    required this.image,
+class DotIndicator extends StatelessWidget {
+  const DotIndicator({
+    super.key,
+    this.isActive = false,
   });
+
+  final bool isActive;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      height: 8,
+      width: isActive ? 24 : 8,
+      decoration: BoxDecoration(
+        color: isActive ? const Color(0xFFFF6B6B) : Colors.grey.shade300,
+        borderRadius: BorderRadius.circular(8),
+      ),
+    );
+  }
 }

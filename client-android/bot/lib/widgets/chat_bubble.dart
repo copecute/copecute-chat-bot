@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/message.dart';
 import 'package:intl/intl.dart';
 import '../utils/auth_service.dart';
@@ -135,6 +136,7 @@ class ChatBubble extends StatelessWidget {
               crossAxisAlignment:
                   isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
+                // Bong bóng tin nhắn
                 Container(
                   constraints: BoxConstraints(
                     maxWidth: MediaQuery.of(context).size.width * 0.75,
@@ -148,89 +150,160 @@ class ChatBubble extends StatelessWidget {
                     borderRadius: borderRadius,
                     boxShadow: bubbleShadow,
                   ),
-                  child: Text(
-                    message.text,
-                    style: TextStyle(
-                      color: isUser ? Colors.white : botTextColor,
-                      fontSize: fontSize,
-                      height: 1.4,
-                      fontWeight: isUser ? FontWeight.w400 : FontWeight.w400,
+                  child: GestureDetector(
+                    onLongPress: () {
+                      // Hiển thị menu sao chép
+                      final RenderBox renderBox =
+                          context.findRenderObject() as RenderBox;
+                      final position = renderBox.localToGlobal(Offset.zero);
+                      final size = renderBox.size;
+
+                      showMenu(
+                        context: context,
+                        position: RelativeRect.fromLTRB(
+                            isUser ? position.dx - 150 : position.dx,
+                            position.dy,
+                            position.dx + size.width,
+                            position.dy + size.height),
+                        items: [
+                          PopupMenuItem(
+                            child: Row(
+                              children: [
+                                Icon(Icons.copy,
+                                    size: 18,
+                                    color: isDarkMode
+                                        ? Colors.white
+                                        : Colors.black87),
+                                const SizedBox(width: 8),
+                                Text('Sao chép'),
+                              ],
+                            ),
+                            onTap: () {
+                              Clipboard.setData(
+                                  ClipboardData(text: message.text));
+                              // Delay để menu đóng trước khi hiển thị Snackbar
+                              Future.delayed(const Duration(milliseconds: 200),
+                                  () {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content:
+                                          const Text('Đã sao chép tin nhắn'),
+                                      backgroundColor: const Color(0xFF3B82F6),
+                                      behavior: SnackBarBehavior.floating,
+                                      duration: const Duration(seconds: 1),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  );
+                                }
+                              });
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                    child: Column(
+                      crossAxisAlignment: isUser
+                          ? CrossAxisAlignment.end
+                          : CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          message.text,
+                          style: TextStyle(
+                            color: isUser ? Colors.white : botTextColor,
+                            fontSize: fontSize,
+                            height: 1.4,
+                            fontWeight:
+                                isUser ? FontWeight.w400 : FontWeight.w400,
+                          ),
+                        ),
+
+                        // Chỉ hiển thị thời gian (không còn nút sao chép)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            timeString,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: isUser
+                                  ? Colors.white.withOpacity(0.7)
+                                  : isDarkMode
+                                      ? Colors.grey.shade300.withOpacity(0.7)
+                                      : const Color(0xFF475569)
+                                          .withOpacity(0.8),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
 
-                // Row cho thời gian và nút dạy bot
-                Padding(
-                  padding: const EdgeInsets.only(top: 4, left: 2, right: 2),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        timeString,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: timeColor,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-
-                      // Nút dạy bot nếu là tin nhắn mặc định từ bot
-                      if (!isUser &&
-                          message.isDefaultResponse &&
-                          onTeachBot != null)
-                        Container(
-                          margin: const EdgeInsets.only(left: 8),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: onTeachBot,
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 5,
-                                ),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      messengerBlue.withOpacity(0.1),
-                                      messengerBlue.withOpacity(0.2),
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: messengerBlue.withOpacity(0.5),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.lightbulb_outline,
-                                      size: 14,
-                                      color: messengerBlue,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'Dạy Bot',
-                                      style: TextStyle(
-                                        color: messengerBlue,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                // Nút dạy bot nếu là tin nhắn mặc định từ bot
+                if (!isUser && message.isDefaultResponse && onTeachBot != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, left: 2),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: onTeachBot,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDarkMode
+                                ? const Color(
+                                    0xFF1E40AF) // Deeper blue for dark mode
+                                : const Color(0xFFDBEAFE), // Light blue bg
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 3,
+                                spreadRadius: 0,
+                                offset: const Offset(0, 1),
                               ),
+                            ],
+                            border: Border.all(
+                              color: isDarkMode
+                                  ? const Color(0xFF3B82F6) // Blue-500
+                                  : const Color(0xFF3B82F6), // Blue-500
+                              width: 1,
                             ),
                           ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.lightbulb_outline,
+                                size: 14,
+                                color: isDarkMode
+                                    ? Colors.yellow.shade300
+                                    : const Color(0xFF1D4ED8), // Blue-700
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Dạy Bot',
+                                style: TextStyle(
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : const Color(0xFF1D4ED8), // Blue-700
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                    ],
+                      ),
+                    ),
                   ),
-                ),
               ],
             ),
           ),
