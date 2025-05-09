@@ -2,8 +2,8 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-6">
-                    <h5>SimSimi Chatbot API</h5>
-                    <p>Tài liệu API chính thức cho ứng dụng SimSimi Chatbot. Sử dụng tài liệu này để tích hợp chatbot vào ứng dụng của bạn.</p>
+                    <h5>copecute Chatbot API</h5>
+                    <p>Tài liệu API chính thức cho ứng dụng copecute Chatbot. Sử dụng tài liệu này để tích hợp chatbot vào ứng dụng của bạn.</p>
                 </div>
                 <div class="col-md-6 text-md-end">
                     <h5>Liên hệ</h5>
@@ -12,7 +12,7 @@
             </div>
             <hr>
             <div class="text-center">
-                <p class="mb-0">&copy; <?php echo date('Y'); ?> SimSimi Chatbot. Tất cả các quyền được bảo lưu.</p>
+                <p class="mb-0">&copy; <?php echo date('Y'); ?> copecute Chatbot. Tất cả các quyền được bảo lưu.</p>
             </div>
         </div>
     </footer>

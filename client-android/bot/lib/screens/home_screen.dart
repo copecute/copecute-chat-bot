@@ -13,7 +13,7 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SimSimi Chatbot'),
+        title: const Text('copecute Chatbot'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -105,7 +105,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
                       const Text(
-                        'Chào mừng đến với SimSimi Chatbot',
+                        'Chào mừng đến với copecute Chatbot',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,

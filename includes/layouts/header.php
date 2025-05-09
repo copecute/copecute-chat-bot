@@ -382,7 +382,7 @@ if (!function_exists('getUserRoleName')) {
                     <a href="<?php echo $base_url; ?>/login.php" class="btn nav-btn nav-btn-login">
                         <i class="fas fa-sign-in-alt"></i> Đăng nhập
                     </a>
-                    <a href="<?php echo $base_url; ?>/register.php" class="btn nav-btn nav-btn-signup">
+                    <a href="<?php echo $base_url; ?>/login.php" class="btn nav-btn nav-btn-signup">
                         <i class="fas fa-user-plus"></i> Đăng ký
                     </a>
                     <?php else: ?>

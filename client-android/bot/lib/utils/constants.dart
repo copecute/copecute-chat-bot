@@ -5,7 +5,7 @@ class AppConstants {
 
   // API endpoints cụ thể
   static const String loginEndpoint = '$apiUrl/auth/login.php';
-  static const String registerEndpoint = '$apiUrl/auth/register.php';
+  static const String registerEndpoint = '$apiUrl/auth/login.php';
   static const String googleLoginEndpoint = '$apiUrl/auth/google_login.php';
   static const String chatEndpoint = '$apiUrl/chat/chat.php';
 
@@ -16,6 +16,9 @@ class AppConstants {
       '$baseUrl/chat/teachbot_controller.php'; // Endpoint web
   static const String teachBackupEndpoint =
       '$apiUrl/teach_bot.php'; // Endpoint backup
+
+  // Sử dụng endpoint chính để dạy bot
+  static const String teachBotEndpoint = teachEndpoint;
 
   static const String historyEndpoint = '$apiUrl/chat/history.php';
   static const String clearHistoryEndpoint = '$apiUrl/chat/clear_messages.php';
@@ -30,7 +33,7 @@ class AppConstants {
   static const String themePrefKey = 'theme';
 
   // URL dành cho môi trường phát triển (dev)
-  static const String devBaseUrl = 'http://10.0.2.2/simsimi';
+  static const String devBaseUrl = 'http://10.0.2.2/copecute';
   static const String devApiUrl = '$devBaseUrl/api';
 
   // API Endpoint cho profile

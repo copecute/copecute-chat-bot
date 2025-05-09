@@ -50,9 +50,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final authService = Provider.of<AuthService>(context, listen: false);
     final profileService = Provider.of<ProfileService>(context, listen: false);
 
+    // Kiểm tra xem người dùng đã đăng nhập chưa
+    if (!authService.isLoggedIn) {
+      // Nếu chưa đăng nhập, chuyển về màn hình đăng nhập
+      _navigateToLogin();
+      return;
+    }
+
     final token = authService.currentUser?.token;
     if (token != null) {
       await profileService.getProfile(token, context);
+
+      // Kiểm tra xem người dùng có còn đăng nhập sau khi gọi API không
+      if (!authService.isLoggedIn) {
+        // Nếu đã bị đăng xuất (do lỗi 401), chuyển về màn hình đăng nhập
+        _navigateToLogin();
+        return;
+      }
+
       _initUserData();
     }
 
@@ -159,6 +174,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final authService = Provider.of<AuthService>(context, listen: false);
     final profileService = Provider.of<ProfileService>(context, listen: false);
 
+    // Kiểm tra xem người dùng đã đăng nhập chưa
+    if (!authService.isLoggedIn) {
+      // Nếu chưa đăng nhập, chuyển về màn hình đăng nhập
+      _navigateToLogin();
+      return;
+    }
+
     try {
       // Chuẩn bị dữ liệu cập nhật
       final Map<String, dynamic> updateData = {
@@ -177,6 +199,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // Gọi API cập nhật thông tin
       bool success = await profileService.updateProfile(
           authService.currentUser!.token, updateData, context);
+
+      // Kiểm tra xem người dùng có còn đăng nhập sau khi gọi API không
+      if (!authService.isLoggedIn) {
+        // Nếu đã bị đăng xuất (do lỗi 401), chuyển về màn hình đăng nhập
+        _navigateToLogin();
+        return;
+      }
 
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -202,7 +231,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -213,6 +244,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final authService = Provider.of<AuthService>(context, listen: false);
     final profileService = Provider.of<ProfileService>(context, listen: false);
 
+    // Kiểm tra xem người dùng đã đăng nhập chưa
+    if (!authService.isLoggedIn) {
+      // Nếu chưa đăng nhập, chuyển về màn hình đăng nhập
+      _navigateToLogin();
+      return;
+    }
+
     try {
       // Gọi API đổi mật khẩu
       bool success = await profileService.changePassword(
@@ -221,6 +259,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _newPasswordController.text,
           _confirmPasswordController.text,
           context);
+
+      // Kiểm tra xem người dùng có còn đăng nhập sau khi gọi API không
+      if (!authService.isLoggedIn) {
+        // Nếu đã bị đăng xuất (do lỗi 401), chuyển về màn hình đăng nhập
+        _navigateToLogin();
+        return;
+      }
 
       if (success) {
         // Xóa các trường nhập liệu
@@ -251,7 +296,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  // Thêm phương thức để chuyển về màn hình đăng nhập
+  void _navigateToLogin() {
+    if (mounted) {
+      // Sử dụng Navigator.pushAndRemoveUntil để xóa hết stack điều hướng
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        (route) => false,
+      );
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Kiểm tra trạng thái đăng nhập mỗi khi widget được xây dựng lại
+    final authService = Provider.of<AuthService>(context, listen: false);
+    if (!authService.isLoggedIn) {
+      // Nếu chưa đăng nhập, sử dụng Future.microtask để tránh lỗi setState during build
+      Future.microtask(() => _navigateToLogin());
     }
   }
 
@@ -259,6 +328,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
     final profileService = Provider.of<ProfileService>(context);
+
+    // Nếu user đã bị đăng xuất (do lỗi 401 hoặc lý do khác), chuyển về màn hình đăng nhập
+    if (!authService.isLoggedIn) {
+      // Sử dụng Future.microtask để tránh gọi setState trong build
+      Future.microtask(() => _navigateToLogin());
+
+      // Hiển thị màn hình loading trong khi chờ chuyển hướng
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     final user = profileService.profileData ?? authService.currentUser;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
@@ -334,12 +417,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 32),
                 InkWell(
-                  onTap: () {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                          builder: (context) => const LoginScreen()),
-                    );
-                  },
+                  onTap: _navigateToLogin,
                   borderRadius: BorderRadius.circular(16),
                   child: Container(
                     padding: const EdgeInsets.symmetric(

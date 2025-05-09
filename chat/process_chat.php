@@ -5,22 +5,50 @@ require_once '../includes/config.php';
 
 // Kiểm tra đăng nhập
 if (!isset($_SESSION['user_id'])) {
-    echo json_encode(['error' => 'Bạn chưa đăng nhập']);
+    echo json_encode(['error' => 'not_logged_in', 'message' => 'Bạn chưa đăng nhập']);
     exit;
 }
 
 $user_id = $_SESSION['user_id'];
 
-// Kiểm tra xem người dùng có tồn tại trong cơ sở dữ liệu không
+// Kiểm tra xem người dùng có tồn tại và trạng thái tài khoản
 try {
-    $stmt = $pdo->prepare('SELECT id FROM users WHERE id = :user_id');
+    $stmt = $pdo->prepare('SELECT id, is_acctive FROM users WHERE id = :user_id');
     $stmt->execute(['user_id' => $user_id]);
-    $user_exists = $stmt->fetch();
+    $user = $stmt->fetch();
     
-    // Nếu người dùng không tồn tại, trả về lỗi
-    if (!$user_exists) {
+    // Nếu người dùng không tồn tại
+    if (!$user) {
         echo json_encode(['error' => 'user_deleted', 'message' => 'Tài khoản không tồn tại hoặc đã bị xóa']);
         exit;
+    }
+
+    // Kiểm tra trạng thái tài khoản
+    $is_acctive = $user['is_acctive'];
+    
+    // Tài khoản chưa kích hoạt
+    if ($is_acctive == '0') {
+        echo json_encode(['error' => 'account_inactive', 'message' => 'Tài khoản chưa được kích hoạt']);
+        exit;
+    }
+    // Tài khoản bị khóa vĩnh viễn
+    elseif ($is_acctive == '2') {
+        echo json_encode(['error' => 'account_banned', 'message' => 'Tài khoản đã bị khóa vĩnh viễn']);
+        exit;
+    }
+    // Tài khoản bị khóa có thời hạn
+    elseif (preg_match('/^\d{4}-\d{2}-\d{2}$/', $is_acctive)) {
+        $lock_date = strtotime($is_acctive);
+        $today = strtotime(date('Y-m-d'));
+        
+        if ($today < $lock_date) {
+            $lock_date_display = date('d/m/Y', $lock_date);
+            echo json_encode([
+                'error' => 'account_locked',
+                'message' => "Tài khoản bị tạm khóa đến ngày $lock_date_display"
+            ]);
+            exit;
+        }
     }
 } catch (PDOException $e) {
     echo json_encode(['error' => 'database_error', 'message' => 'Lỗi kiểm tra người dùng: ' . $e->getMessage()]);

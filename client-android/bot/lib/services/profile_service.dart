@@ -220,19 +220,32 @@ class ProfileService extends ChangeNotifier {
 
   // Xử lý lỗi xác thực token
   Future<void> _handleUnauthorized(BuildContext context) async {
+    debugPrint('Xử lý lỗi 401 trong ProfileService');
     _errorMessage = 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại';
 
     // Đăng xuất người dùng
     final authService = Provider.of<AuthService>(context, listen: false);
     await authService.signOut();
 
-    // Chuyển hướng đến trang đăng nhập
+    // Hiển thị thông báo cho người dùng sử dụng ScaffoldMessenger nếu có thể
     if (context.mounted) {
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        AppRoutes.login,
-        (route) => false,
-      );
+      // Kiểm tra xem có Scaffold hiện tại không để hiển thị SnackBar
+      try {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content:
+                Text('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      } catch (e) {
+        debugPrint('Không thể hiển thị thông báo: $e');
+      }
     }
+
+    // Không cần sử dụng Navigator ở đây vì class cha ProfileScreen sẽ phát hiện
+    // trạng thái đăng nhập đã thay đổi và tự động chuyển hướng
   }
 
   // Cập nhật thông tin người dùng từ dữ liệu profile

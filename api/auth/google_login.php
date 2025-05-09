@@ -46,8 +46,16 @@ try {
     $stmt->execute(['email' => $email, 'google_id' => $google_id]);
     $user = $stmt->fetch();
     
-    // Nếu người dùng chưa tồn tại, tạo tài khoản mới
+    // Nếu người dùng chưa tồn tại, kiểm tra có cho phép đăng ký không trước khi tạo tài khoản mới
     if (!$user) {
+        // Kiểm tra xem đăng ký có được cho phép hay không
+        $stmt = $pdo->query("SELECT setting_value FROM system_settings WHERE setting_key = 'allow_registration'");
+        $allow_registration = $stmt->fetchColumn();
+        
+        if (!$allow_registration) {
+            returnError('Đăng ký tài khoản mới đã bị tạm khóa. Vui lòng liên hệ quản trị viên!', 403);
+        }
+        
         // Tạo username duy nhất từ email
         $base_username = strtolower(explode('@', $email)[0]);
         $username = $base_username;
@@ -92,6 +100,19 @@ try {
                 'user_id' => $user_id,
                 'full_name' => $name,
                 'avatar' => $picture
+            ]);
+            
+            // Lấy quota mặc định từ cài đặt
+            $stmt = $pdo->query("SELECT setting_value FROM system_settings WHERE setting_key = 'default_quota'");
+            $default_quota = $stmt->fetchColumn() ?: 101; // Mặc định 101 nếu không tìm thấy
+            
+            // Tạo token
+            $token = bin2hex(random_bytes(32));
+            $stmt = $pdo->prepare('INSERT INTO user_tokens (user_id, token, quota) VALUES (:user_id, :token, :quota)');
+            $stmt->execute([
+                'user_id' => $user_id,
+                'token' => $token,
+                'quota' => $default_quota
             ]);
             
             $pdo->commit();
@@ -146,7 +167,8 @@ try {
     if (!$token_info) {
         // Nếu không có token, tạo token mới
         $token = bin2hex(random_bytes(32));
-        $quota = 100; // Quota mặc định
+        $stmt = $pdo->query("SELECT setting_value FROM system_settings WHERE setting_key = 'default_quota'");
+        $quota = $stmt->fetchColumn() ?: 101; // Mặc định 101 nếu không tìm thấy
         
         $stmt = $pdo->prepare('INSERT INTO user_tokens (user_id, token, quota) VALUES (:user_id, :token, :quota)');
         $stmt->execute([

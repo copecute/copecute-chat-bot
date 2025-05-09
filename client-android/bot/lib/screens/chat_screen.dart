@@ -84,7 +84,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     try {
       // Truyền context cho ChatService để xử lý lỗi 401
-      await chatService.fetchChatHistory(authService.getAuthToken()!, context);
+      await chatService.fetchChatHistory(context);
 
       // Nếu không có lỗi từ ChatService nhưng lịch sử chat trống
       if (chatService.messages.isEmpty && chatService.errorMessage == null) {
@@ -177,7 +177,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _scrollToBottom(forceScroll: true);
 
     // Gửi tin nhắn và đợi phản hồi từ server - truyền context để xử lý lỗi 401
-    await chatService.sendMessage(messageText, token, context);
+    await chatService.sendMessage(messageText, context);
 
     // Cuộn xuống cuối danh sách tin nhắn một lần nữa sau khi nhận phản hồi
     _scrollToBottom(forceScroll: true);
@@ -448,17 +448,31 @@ class _ChatScreenState extends State<ChatScreen> {
                           success = await chatService.teachBot(
                             questionController.text.trim(),
                             answerController.text.trim(),
-                            token,
-                            isImpolite, // Truyền giá trị isImpolite
-                            context, // Truyền context để xử lý lỗi 401
+                            isImpolite,
+                            context,
                           );
+
+                          // Nếu có lỗi unauthorized, đóng dialog
+                          if (chatService.errorMessage ==
+                              'Phiên đăng nhập đã hết hạn') {
+                            // Ngay lập tức đóng dialog dạy bot nếu user đã bị đăng xuất
+                            if (mounted &&
+                                Navigator.of(dialogContext).canPop()) {
+                              Navigator.of(dialogContext).pop();
+                            }
+                            return; // Thoát sớm vì user đã bị đưa về trang đăng nhập
+                          }
                         } catch (e) {
                           debugPrint('Lỗi khi dạy bot: $e');
                         }
 
                         // Đóng dialog và hiển thị kết quả nếu widget vẫn tồn tại
                         if (mounted) {
-                          Navigator.of(dialogContext).pop();
+                          // Kiểm tra một lần nữa xem dialog có thể đóng không
+                          if (Navigator.of(dialogContext).canPop()) {
+                            Navigator.of(dialogContext).pop();
+                          }
+
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(success
@@ -599,8 +613,8 @@ class _ChatScreenState extends State<ChatScreen> {
       });
 
       try {
-        // Sử dụng clearChatHistory nhưng KHÔNG truyền context để tránh lỗi Provider
-        final success = await chatService.clearChatHistory(token);
+        // Sử dụng clearChatHistory với context để xử lý lỗi 401
+        final success = await chatService.clearChatHistory(context);
         if (success) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(

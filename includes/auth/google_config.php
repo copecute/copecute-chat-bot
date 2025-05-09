@@ -35,7 +35,7 @@ try {
     }
 } catch (PDOException $e) {
     // Xử lý lỗi khi truy vấn cơ sở dữ liệu
-    error_log('Lỗi khi lấy cấu hình Google OAuth: ' . $e->getMessage());
+    // error_log('Lỗi khi lấy cấu hình Google OAuth: ' . $e->getMessage());
 }
 
 // Hàm tạo URL đăng nhập Google

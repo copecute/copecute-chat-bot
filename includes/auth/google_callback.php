@@ -22,7 +22,7 @@ if (isset($_GET['error'])) {
     if ($is_admin_login) {
         header('Location: ' . $base_url . '/admin/index.php?error=google_auth_failed&reason=' . urlencode($_GET['error']));
     } elseif ($is_register) {
-        header('Location: ' . $base_url . '/register.php?error=google_auth_failed&reason=' . urlencode($_GET['error']));
+        header('Location: ' . $base_url . '/login.php?error=google_auth_failed&reason=' . urlencode($_GET['error']));
     } else {
         header('Location: ' . $base_url . '/login.php?error=google_auth_failed&reason=' . urlencode($_GET['error']));
     }
@@ -34,7 +34,7 @@ if (!isset($_GET['code'])) {
     if ($is_admin_login) {
         header('Location: ' . $base_url . '/admin/index.php');
     } elseif ($is_register) {
-        header('Location: ' . $base_url . '/register.php');
+        header('Location: ' . $base_url . '/login.php');
     } else {
         header('Location: ' . $base_url . '/login.php');
     }
@@ -46,7 +46,7 @@ if (!isset($_GET['state']) || !isset($_SESSION['google_auth_state']) || $_GET['s
     if ($is_admin_login) {
         header('Location: ' . $base_url . '/admin/index.php?error=state_mismatch');
     } elseif ($is_register) {
-        header('Location: ' . $base_url . '/register.php?error=state_mismatch');
+        header('Location: ' . $base_url . '/login.php?error=state_mismatch');
     } else {
         header('Location: ' . $base_url . '/login.php?error=state_mismatch');
     }
@@ -62,12 +62,12 @@ try {
         $error_reason = isset($token_data['error']) ? $token_data['error'] : 'unknown_error';
         
         // Log lỗi để debug
-        error_log('Google Token Error: ' . print_r($token_data, true));
+        // error_log('Google Token Error: ' . print_r($token_data, true));
         
         if ($is_admin_login) {
             header('Location: ' . $base_url . '/admin/index.php?error=google_token_failed&reason=' . urlencode($error_reason));
         } elseif ($is_register) {
-            header('Location: ' . $base_url . '/register.php?error=google_token_failed&reason=' . urlencode($error_reason));
+            header('Location: ' . $base_url . '/login.php?error=google_token_failed&reason=' . urlencode($error_reason));
         } else {
             header('Location: ' . $base_url . '/login.php?error=google_token_failed&reason=' . urlencode($error_reason));
         }
@@ -81,12 +81,12 @@ try {
     // Nếu không lấy được thông tin người dùng
     if (!$user_info) {
         // Log lỗi để debug
-        error_log('Google User Info Error: Failed to get user info with token ' . substr($access_token, 0, 10) . '...');
+        // error_log('Google User Info Error: Failed to get user info with token ' . substr($access_token, 0, 10) . '...');
         
         if ($is_admin_login) {
             header('Location: ' . $base_url . '/admin/index.php?error=userinfo_failed');
         } elseif ($is_register) {
-            header('Location: ' . $base_url . '/register.php?error=userinfo_failed');
+            header('Location: ' . $base_url . '/login.php?error=userinfo_failed');
         } else {
             header('Location: ' . $base_url . '/login.php?error=userinfo_failed');
         }
@@ -94,23 +94,13 @@ try {
     }
     
     // Log thông tin người dùng (để debug)
-    error_log('Google User Info: ' . print_r($user_info, true));
+    // error_log('Google User Info: ' . print_r($user_info, true));
     
     // Lấy thông tin từ user_info
     $email = $user_info['email'] ?? '';
     $name = $user_info['name'] ?? '';
     $google_id = $user_info['sub'] ?? ''; // sub là ID trong Google
     $picture = $user_info['picture'] ?? '';
-    
-    // Nếu là quá trình đăng ký
-    if ($is_register) {
-        // Lưu thông tin Google vào session để sử dụng trong quá trình đăng ký
-        $_SESSION['google_info'] = $user_info;
-        
-        // Chuyển hướng về trang đăng ký
-        header('Location: ' . $base_url . '/register.php');
-        exit;
-    }
     
     // Kiểm tra xem email hoặc google_id đã tồn tại trong cơ sở dữ liệu chưa
     $stmt = $pdo->prepare('SELECT * FROM users WHERE email = :email OR google_id = :google_id');
@@ -171,18 +161,18 @@ try {
         if (empty($user['google_id'])) {
             try {
                 // Cập nhật Google ID cho tài khoản
-                error_log('Cập nhật Google ID cho tài khoản ' . $user['id']);
+                // error_log('Cập nhật Google ID cho tài khoản ' . $user['id']);
                 $stmt = $pdo->prepare('UPDATE users SET google_id = :google_id, updated_at = NOW() WHERE id = :id');
                 $stmt->execute(['google_id' => $google_id, 'id' => $user['id']]);
             } catch (PDOException $e) {
-                error_log('Lỗi khi cập nhật Google ID: ' . $e->getMessage());
+                // error_log('Lỗi khi cập nhật Google ID: ' . $e->getMessage());
                 // Tiếp tục mà không dừng lại vì lỗi này không quan trọng
             }
         }
         
         try {
             // Đăng nhập thành công
-            error_log('Đăng nhập thành công với user_id=' . $user['id']);
+            // error_log('Đăng nhập thành công với user_id=' . $user['id']);
             
             // Cập nhật thời gian đăng nhập cuối
             $update_login_time = $pdo->prepare('UPDATE users SET last_login = NOW() WHERE id = :id');
@@ -211,7 +201,7 @@ try {
                 exit;
             }
         } catch (Exception $e) {
-            error_log('Lỗi khi xử lý đăng nhập: ' . $e->getMessage());
+            // error_log('Lỗi khi xử lý đăng nhập: ' . $e->getMessage());
             
             if ($is_admin_login) {
                 header('Location: ' . $base_url . '/admin/index.php?error=session_error&message=' . urlencode($e->getMessage()));
@@ -222,119 +212,26 @@ try {
         }
         
     } else {
-        // Tạo tài khoản mới từ thông tin Google
+        // Thay vì tự động tạo tài khoản, lưu thông tin Google vào session và chuyển đến trang login
         try {
-            // Log cho quá trình tạo tài khoản
-            error_log('Tạo tài khoản mới với email: ' . $email);
+            // Log cho quá trình xử lý
+            // error_log('Email chưa tồn tại trong hệ thống, chuyển về trang login để tạo tài khoản mới: ' . $email);
             
-            // Tạo username từ email
-            $username_base = strtolower(explode('@', $email)[0]);
-            // Loại bỏ các ký tự không phải chữ cái, số, gạch dưới
-            $username_base = preg_replace('/[^a-z0-9_]/i', '', $username_base);
-            // Đảm bảo username không rỗng
-            if (empty($username_base)) {
-                $username_base = 'user';
-            }
-            $username = $username_base;
-            $counter = 1;
+            // Lưu thông tin Google vào session để sử dụng trong quá trình đăng ký
+            $_SESSION['google_info'] = $user_info;
             
-            // Kiểm tra xem username đã tồn tại chưa
-            while (true) {
-                $stmt = $pdo->prepare('SELECT COUNT(*) FROM users WHERE username = :username');
-                $stmt->execute(['username' => $username]);
-                if ($stmt->fetchColumn() == 0) {
-                    break;
-                }
-                $username = $username_base . $counter;
-                $counter++;
-            }
+            // Chuyển hướng về trang login để tạo tài khoản
+            header('Location: ' . $base_url . '/login.php');
+            exit;
             
-            // Mật khẩu ngẫu nhiên cho tài khoản (người dùng có thể đổi sau)
-            $password = bin2hex(random_bytes(8));
-            $password_hash = password_hash($password, PASSWORD_DEFAULT);
-            
-            // Bắt đầu transaction
-            $pdo->beginTransaction();
-            $transaction_active = true;
-            
-            try {
-                // Thêm người dùng mới
-                $stmt = $pdo->prepare('
-                    INSERT INTO users (username, email, password, google_id, level, is_acctive, created_at, updated_at, last_login) 
-                    VALUES (:username, :email, :password, :google_id, 0, 1, NOW(), NOW(), NOW())
-                ');
-                $stmt->execute([
-                    'username' => $username,
-                    'email' => $email,
-                    'password' => $password_hash,
-                    'google_id' => $google_id,
-                ]);
-                
-                $user_id = $pdo->lastInsertId();
-                error_log('Đã tạo user id: ' . $user_id);
-                
-                // Thêm thông tin người dùng
-                $stmt = $pdo->prepare('
-                    INSERT INTO user_infos (user_id, full_name, avatar, created_at, updated_at) 
-                    VALUES (:user_id, :full_name, :avatar, NOW(), NOW())
-                ');
-                $stmt->execute([
-                    'user_id' => $user_id,
-                    'full_name' => $name,
-                    'avatar' => $picture
-                ]);
-                
-                // Thêm token/quota cho người dùng mới
-                $stmt = $pdo->prepare('
-                    INSERT INTO user_tokens (user_id, token, quota) 
-                    VALUES (:user_id, :token, :quota)
-                ');
-                
-                // Lấy quota mặc định từ cài đặt
-                $default_quota = 100;
-                try {
-                    $quota_stmt = $pdo->prepare("SELECT setting_value FROM system_settings WHERE setting_key = 'default_quota' AND category = 'chatbot'");
-                    $quota_stmt->execute();
-                    $result = $quota_stmt->fetch();
-                    if ($result) {
-                        $default_quota = (int)$result['setting_value'];
-                    }
-                } catch (PDOException $e) {
-                    error_log('Lỗi khi lấy quota mặc định: ' . $e->getMessage());
-                    // Giữ nguyên quota mặc định nếu có lỗi
-                }
-                
-                $stmt->execute([
-                    'user_id' => $user_id,
-                    'token' => bin2hex(random_bytes(16)),
-                    'quota' => $default_quota
-                ]);
-                
-                // Commit transaction
-                $pdo->commit();
-                $transaction_active = false;
-                
-                // Đăng nhập thành công
-                $_SESSION['user_id'] = $user_id;
-                $_SESSION['username'] = $username;
-                $_SESSION['user_level'] = 0; // Người dùng thông thường
-                
-                // Chuyển hướng đến trang chính
-                header('Location: ' . $base_url . '/chat');
-                exit;
-                
-            } catch (PDOException $e) {
-                // Rollback khi có lỗi
-                if ($transaction_active && $pdo->inTransaction()) {
-                    $pdo->rollBack();
-                }
-                error_log('Lỗi cơ sở dữ liệu khi tạo tài khoản: ' . $e->getMessage());
-                header('Location: ' . $base_url . '/login.php?error=db_error&message=' . urlencode($e->getMessage()));
-                exit;
-            }
         } catch (Exception $e) {
-            error_log('Lỗi chung khi tạo tài khoản: ' . $e->getMessage());
-            header('Location: ' . $base_url . '/login.php?error=account_creation_error&message=' . urlencode($e->getMessage()));
+            // error_log('Lỗi khi xử lý thông tin Google: ' . $e->getMessage());
+            
+            if ($is_admin_login) {
+                header('Location: ' . $base_url . '/admin/index.php?error=account_creation_error&message=' . urlencode($e->getMessage()));
+            } else {
+                header('Location: ' . $base_url . '/login.php?error=account_creation_error&message=' . urlencode($e->getMessage()));
+            }
             exit;
         }
     }

@@ -18,7 +18,7 @@ if (session_status() == PHP_SESSION_NONE) {
 
 // local
 $host = 'localhost';
-$db   = 'simsimi';
+$db   = 'copecute';
 $user = 'root'; // Thay đổi nếu bạn dùng user khác
 $pass = '';
 $charset = 'utf8mb4';
@@ -80,5 +80,66 @@ require_once __DIR__ . '/maintenance.php';
 // thì hiển thị trang bảo trì
 if (isMaintenanceMode($pdo) && !isAdminPage() && !isAdminUser()) {
     showMaintenancePage();
+}
+
+// Kiểm tra trạng thái tài khoản nếu đã đăng nhập (thêm mới)
+if (isset($_SESSION['user_id'])) {
+    // Lấy thông tin user và kiểm tra trạng thái tài khoản
+    try {
+        $stmt = $pdo->prepare('SELECT is_acctive FROM users WHERE id = :user_id');
+        $stmt->execute(['user_id' => $_SESSION['user_id']]);
+        $user = $stmt->fetch();
+        
+        if ($user) {
+            $is_acctive = $user['is_acctive'];
+            $redirect = false;
+            $message = '';
+            
+            // Tài khoản chưa kích hoạt
+            if ($is_acctive == '0') {
+                $redirect = true;
+                $message = 'account_inactive';
+            } 
+            // Tài khoản bị khóa vĩnh viễn
+            elseif ($is_acctive == '2') {
+                $redirect = true;
+                $message = 'account_banned';
+            }
+            // Tài khoản bị khóa có thời hạn (yyyy-mm-dd)
+            elseif (preg_match('/^\d{4}-\d{2}-\d{2}$/', $is_acctive)) {
+                $lock_date = strtotime($is_acctive);
+                $today = strtotime(date('Y-m-d'));
+                
+                if ($today < $lock_date) {
+                    // Chưa đến ngày mở khóa
+                    $redirect = true;
+                    $lock_date_display = date('d/m/Y', $lock_date);
+                    $message = 'account_locked&date=' . $lock_date_display;
+                } else {
+                    // Đã đến ngày mở khóa, cập nhật trạng thái
+                    $update_stmt = $pdo->prepare('UPDATE users SET is_acctive = "1" WHERE id = :id');
+                    $update_stmt->execute(['id' => $_SESSION['user_id']]);
+                }
+            }
+            
+            // Nếu cần chuyển hướng do tài khoản bị khóa hoặc chưa kích hoạt
+            if ($redirect) {
+                // Xóa session
+                session_unset();
+                session_destroy();
+                
+                // Xác định URL hiện tại
+                $current_url = $_SERVER['REQUEST_URI'];
+                $login_url = $base_url . '/login.php?error=' . $message;
+                
+                // Chuyển hướng về trang login
+                header('Location: ' . $login_url);
+                exit;
+            }
+        }
+    } catch (PDOException $e) {
+        // Ghi log lỗi nhưng không làm gián đoạn
+        error_log('Lỗi kiểm tra trạng thái tài khoản: ' . $e->getMessage());
+    }
 }
 ?> 

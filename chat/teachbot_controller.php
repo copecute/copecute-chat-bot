@@ -27,8 +27,8 @@ $reply = trim($_POST['reply']);
 $impolite = isset($_POST['impolite']) && ($_POST['impolite'] == 1 || $_POST['impolite'] == 'true' || $_POST['impolite'] == 'on') ? 1 : 0;
 
 // Debug
-error_log("Received impolite value: " . print_r($_POST['impolite'], true));
-error_log("Processed impolite value: $impolite");
+// error_log("Received impolite value: " . print_r($_POST['impolite'], true));
+// error_log("Processed impolite value: $impolite");
 
 // Hàm đếm ký tự thực tế (bỏ qua dấu nháy kép và các ký tự đặc biệt)
 function countActualCharacters($str) {

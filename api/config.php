@@ -25,6 +25,53 @@ if (session_status() == PHP_SESSION_NONE) {
 // Include cấu hình chung từ file gốc
 require_once dirname(__DIR__) . '/includes/config.php';
 
+// Hàm kiểm tra trạng thái tài khoản
+function checkAccountStatus($userId, $pdo) {
+    try {
+        $stmt = $pdo->prepare('SELECT is_acctive FROM users WHERE id = :user_id');
+        $stmt->execute(['user_id' => $userId]);
+        $result = $stmt->fetch();
+        
+        if (!$result) {
+            return false; // Tài khoản không tồn tại
+        }
+        
+        $is_acctive = $result['is_acctive'];
+        
+        // Trường hợp tài khoản đã bị khóa vĩnh viễn hoặc chưa kích hoạt
+        if ($is_acctive === '0' || $is_acctive === '2') {
+            return false;
+        }
+        
+        // Trường hợp tài khoản đã kích hoạt
+        if ($is_acctive === '1') {
+            return true;
+        }
+        
+        // Kiểm tra xem có phải bị khóa đến ngày cụ thể không
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $is_acctive)) {
+            $lock_date = strtotime($is_acctive);
+            $today = strtotime(date('Y-m-d'));
+            
+            if ($today >= $lock_date) {
+                // Đã đến hoặc qua ngày mở khóa, cập nhật trạng thái tài khoản
+                $update_stmt = $pdo->prepare('UPDATE users SET is_acctive = "1" WHERE id = :id');
+                $update_stmt->execute(['id' => $userId]);
+                return true;
+            } else {
+                // Chưa đến ngày mở khóa
+                return false;
+            }
+        }
+        
+        // Mặc định trả về false nếu không rơi vào các trường hợp trên
+        return false;
+    } catch (PDOException $e) {
+        // error_log('Lỗi kiểm tra trạng thái tài khoản: ' . $e->getMessage());
+        return false;
+    }
+}
+
 // Hàm kiểm tra token API
 function validateApiToken($token, $pdo) {
     if (empty($token)) {
@@ -36,7 +83,24 @@ function validateApiToken($token, $pdo) {
         $stmt->execute(['token' => $token]);
         $result = $stmt->fetch();
         
-        return $result ? $result['user_id'] : false;
+        if (!$result) {
+            return false; // Token không hợp lệ
+        }
+        
+        $userId = $result['user_id'];
+        
+        // Kiểm tra trạng thái tài khoản
+        $isAccountActive = checkAccountStatus($userId, $pdo);
+        if (!$isAccountActive) {
+            http_response_code(401);
+            echo json_encode([
+                'error' => 'Tài khoản đã bị khóa hoặc chưa được kích hoạt',
+                'code' => 'account_locked'
+            ]);
+            exit;
+        }
+        
+        return $userId;
     } catch (PDOException $e) {
         return false;
     }
@@ -59,9 +123,15 @@ function getAuthToken() {
 }
 
 // Hàm trả về lỗi JSON
-function returnError($message, $statusCode = 400) {
+function returnError($message, $statusCode = 400, $errorCode = null) {
     http_response_code($statusCode);
-    echo json_encode(['error' => $message]);
+    $response = ['error' => $message];
+    
+    if ($errorCode !== null) {
+        $response['code'] = $errorCode;
+    }
+    
+    echo json_encode($response);
     exit;
 }
 

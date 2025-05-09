@@ -55,7 +55,7 @@ try {
     
     // Lấy quota mặc định từ cài đặt
     $stmt = $pdo->query("SELECT setting_value FROM system_settings WHERE setting_key = 'default_quota'");
-    $default_quota = $stmt->fetchColumn() ?: 100; // Mặc định 100 nếu không tìm thấy
+    $default_quota = $stmt->fetchColumn() ?: 101; // Mặc định 100 nếu không tìm thấy
     
     // Mã hóa mật khẩu
     $password_hash = password_hash($password, PASSWORD_DEFAULT);

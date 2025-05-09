@@ -34,7 +34,7 @@ try {
     if ($is_admin_login) {
         header('Location: ' . $base_url . '/admin/index.php?error=google_init_error&message=' . urlencode($e->getMessage()));
     } elseif ($is_register) {
-        header('Location: ' . $base_url . '/register.php?error=google_init_error&message=' . urlencode($e->getMessage()));
+        header('Location: ' . $base_url . '/login.php?error=google_init_error&message=' . urlencode($e->getMessage()));
     } else {
         header('Location: ' . $base_url . '/login.php?error=google_init_error&message=' . urlencode($e->getMessage()));
     }

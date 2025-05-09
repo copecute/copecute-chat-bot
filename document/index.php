@@ -22,11 +22,11 @@ include_once 'header.php';
         <div class="col-md-9">
             <div class="card">
                 <div class="card-header bg-primary text-white">
-                    <h1 class="h3 mb-0">Tài liệu API SimSimi Chatbot</h1>
+                    <h1 class="h3 mb-0">Tài liệu API copecute Chatbot</h1>
                 </div>
                 <div class="card-body">
                     <h2>Giới thiệu</h2>
-                    <p>Chào mừng bạn đến với tài liệu API SimSimi Chatbot. Tài liệu này cung cấp thông tin chi tiết về các API khả dụng để tích hợp với ứng dụng của bạn.</p>
+                    <p>Chào mừng bạn đến với tài liệu API copecute Chatbot. Tài liệu này cung cấp thông tin chi tiết về các API khả dụng để tích hợp với ứng dụng của bạn.</p>
                     
                     <h2>API có sẵn</h2>
                     <div class="table-responsive">
@@ -47,7 +47,7 @@ include_once 'header.php';
                                     <td>Không</td>
                                 </tr>
                                 <tr>
-                                    <td><a href="register.php">/api/register.php</a></td>
+                                    <td><a href="register.php">/api/login.php</a></td>
                                     <td>Đăng ký tài khoản mới</td>
                                     <td><span class="badge bg-success">POST</span></td>
                                     <td>Không</td>

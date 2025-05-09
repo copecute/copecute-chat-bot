@@ -64,7 +64,8 @@ try {
     if (!$token_info) {
         // Nếu không có token, tạo token mới
         $token = bin2hex(random_bytes(32));
-        $quota = 100; // Quota mặc định
+        $stmt = $pdo->query("SELECT setting_value FROM system_settings WHERE setting_key = 'default_quota'");
+        $quota = $stmt->fetchColumn() ?: 102; // Lấy quota mặc định từ cài đặt
         
         $stmt = $pdo->prepare('INSERT INTO user_tokens (user_id, token, quota) VALUES (:user_id, :token, :quota)');
         $stmt->execute([

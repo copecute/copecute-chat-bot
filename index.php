@@ -330,7 +330,7 @@ require_once 'includes/layouts/header.php';
                         <a href="<?php echo $base_url; ?>/login.php" class="btn btn-light btn-cta">
                                 <i class="fas fa-sign-in-alt"></i> Đăng nhập
                             </a>
-                        <a href="<?php echo $base_url; ?>/register.php" class="btn btn-outline-light btn-cta">
+                        <a href="<?php echo $base_url; ?>/login.php" class="btn btn-outline-light btn-cta">
                                 <i class="fas fa-user-plus"></i> Đăng ký
                             </a>
                         <?php endif; ?>
@@ -485,7 +485,7 @@ require_once 'includes/layouts/header.php';
                     <a href="<?php echo $base_url; ?>/login.php" class="btn btn-primary btn-cta">
                             <i class="fas fa-sign-in-alt"></i> Đăng nhập
                         </a>
-                    <a href="<?php echo $base_url; ?>/register.php" class="btn btn-outline-primary btn-cta">
+                    <a href="<?php echo $base_url; ?>/login.php" class="btn btn-outline-primary btn-cta">
                             <i class="fas fa-user-plus"></i> Đăng ký
                         </a>
                     <?php endif; ?>

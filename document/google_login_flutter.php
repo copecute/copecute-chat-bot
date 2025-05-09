@@ -26,7 +26,7 @@ include_once 'header.php';
                 </div>
                 <div class="card-body">
                     <h2>Tổng quan</h2>
-                    <p>Hướng dẫn này sẽ giúp bạn tích hợp đăng nhập Google vào ứng dụng Flutter và kết nối với API đăng nhập Google của SimSimi.</p>
+                    <p>Hướng dẫn này sẽ giúp bạn tích hợp đăng nhập Google vào ứng dụng Flutter và kết nối với API đăng nhập Google của copecute.</p>
                     
                     <h2>Cài đặt gói</h2>
                     <p>Thêm các gói cần thiết vào file <code>pubspec.yaml</code> của bạn:</p>
@@ -266,7 +266,7 @@ class MyApp extends StatelessWidget {
       child: Consumer&lt;AuthService&gt;(
         builder: (context, authService, _) {
           return MaterialApp(
-            title: 'SimSimi Chatbot',
+            title: 'copecute Chatbot',
             debugShowCheckedModeBanner: false,
             theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(
@@ -337,7 +337,7 @@ class _LoginScreenState extends State&lt;LoginScreen&gt; {
                 
                 // Tiêu đề
                 const Text(
-                  'SimSimi Chatbot',
+                  'copecute Chatbot',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -415,7 +415,7 @@ class _LoginScreenState extends State&lt;LoginScreen&gt; {
                     <p>Cập nhật file <code>android/app/build.gradle</code> để thêm SHA-1 certificate fingerprint:</p>
                     <div class="bg-light p-3 rounded mb-4">
                         <pre><code>defaultConfig {
-    applicationId "com.yourdomain.simsimi"
+    applicationId "com.yourdomain.copecute"
     minSdkVersion 21  // Tối thiểu cho Google Sign-In
     targetSdkVersion flutter.targetSdkVersion
     versionCode flutterVersionCode.toInteger()
@@ -426,7 +426,7 @@ class _LoginScreenState extends State&lt;LoginScreen&gt; {
                     <p>Cập nhật file <code>android/app/src/main/AndroidManifest.xml</code> để thêm Internet permission:</p>
                     <div class="bg-light p-3 rounded mb-4">
                         <pre><code>&lt;manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.yourdomain.simsimi"&gt;
+    package="com.yourdomain.copecute"&gt;
     &lt;uses-permission android:name="android.permission.INTERNET"/&gt;
     
     &lt;!-- ... Phần còn lại của manifest --&gt;

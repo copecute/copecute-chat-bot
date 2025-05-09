@@ -187,7 +187,7 @@ require_once 'includes/layouts/header.php';
                         Đăng ký ngay hôm nay và khám phá sự khác biệt với trợ lý ảo thông minh nhất.
                     </p>
                     <div class="mt-4">
-                        <a href="<?php echo $base_url; ?>/register.php" class="btn btn-light btn-lg px-5 me-3">
+                        <a href="<?php echo $base_url; ?>/login.php" class="btn btn-light btn-lg px-5 me-3">
                             <i class="fas fa-user-plus me-2"></i> Đăng ký ngay
                         </a>
                         <a href="<?php echo $base_url; ?>/chat/" class="btn btn-outline-light btn-lg px-5">

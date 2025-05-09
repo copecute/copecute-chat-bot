@@ -10,6 +10,7 @@ class AuthService extends ChangeNotifier {
   User? _currentUser;
   bool _isLoading = false;
   String? _errorMessage;
+  bool _registrationLocked = false;
 
   // API URL
   final String _baseUrl = 'https://copecute.minhgiang.pro/api';
@@ -25,6 +26,7 @@ class AuthService extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isLoggedIn => _currentUser != null;
   String? get errorMessage => _errorMessage;
+  bool get registrationLocked => _registrationLocked;
 
   AuthService() {
     // Khởi tạo và tự động load user từ local storage
@@ -83,6 +85,39 @@ class AuthService extends ChangeNotifier {
     } catch (_) {
       return 'Lỗi không xác định khi đăng nhập: $error';
     }
+  }
+
+  // Xử lý mã lỗi HTTP từ server
+  String _parseServerErrorMessage(dynamic responseData) {
+    if (responseData is Map<String, dynamic> &&
+        responseData.containsKey('error')) {
+      final errorMessage = responseData['error'];
+
+      // Xử lý các trường hợp lỗi đặc biệt
+      if (errorMessage.contains('Đăng ký tài khoản mới đã bị tạm khóa')) {
+        _registrationLocked = true;
+        return 'Đăng ký tài khoản mới đã bị tạm khóa. Vui lòng liên hệ quản trị viên!';
+      } else if (errorMessage
+          .contains('Tài khoản của bạn chưa được kích hoạt')) {
+        return 'Tài khoản của bạn chưa được kích hoạt. Vui lòng liên hệ quản trị viên để kích hoạt tài khoản!';
+      } else if (errorMessage
+          .contains('Tài khoản của bạn đã bị khóa vĩnh viễn')) {
+        return 'Tài khoản của bạn đã bị khóa vĩnh viễn. Vui lòng liên hệ quản trị viên để được hỗ trợ!';
+      } else if (errorMessage
+          .contains('Tài khoản của bạn đã bị khóa đến ngày')) {
+        // Trích xuất ngày từ thông báo lỗi
+        final dateRegex = RegExp(
+            r'Tài khoản của bạn đã bị khóa đến ngày (\d{2}/\d{2}/\d{4})');
+        final match = dateRegex.firstMatch(errorMessage);
+        final unlockDate = match?.group(1) ?? 'không xác định';
+        return 'Tài khoản của bạn đã bị khóa đến ngày $unlockDate. Vui lòng liên hệ quản trị viên để được hỗ trợ!';
+      } else if (errorMessage.contains('Tài khoản của bạn đã bị khóa')) {
+        return 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ!';
+      }
+
+      return errorMessage;
+    }
+    return 'Lỗi không xác định từ server';
   }
 
   // Đăng nhập bằng Google
@@ -154,7 +189,7 @@ class AuthService extends ChangeNotifier {
       }
 
       // Tạo URL API login
-      final apiUrl = 'https://copecute.minhgiang.pro/api/google_login.php';
+      final apiUrl = 'https://copecute.minhgiang.pro/api/auth/google_login.php';
       debugPrint('Gửi request đến: $apiUrl');
 
       // Chuẩn bị dữ liệu
@@ -192,7 +227,7 @@ class AuthService extends ChangeNotifier {
             debugPrint('Đăng nhập thành công');
             return true;
           } else {
-            _errorMessage = responseData['error'] ?? 'Đăng nhập thất bại';
+            _errorMessage = _parseServerErrorMessage(responseData);
             debugPrint('Server trả về lỗi: $_errorMessage');
           }
         } catch (e) {
@@ -202,8 +237,7 @@ class AuthService extends ChangeNotifier {
       } else {
         try {
           final errorResponse = json.decode(response.body);
-          _errorMessage = errorResponse['error'] ??
-              'Lỗi kết nối đến server: ${response.statusCode}';
+          _errorMessage = _parseServerErrorMessage(errorResponse);
         } catch (e) {
           _errorMessage = 'Lỗi kết nối đến server: ${response.statusCode}';
         }

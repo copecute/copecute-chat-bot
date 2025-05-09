@@ -68,7 +68,7 @@ function handleApprove($id) {
         }
         
         // Debug impolite value
-        error_log("Request impolite value: " . print_r($request['impolite'], true));
+        // error_log("Request impolite value: " . print_r($request['impolite'], true));
         
         // Kiểm tra trạng thái
         if ($request['status'] !== 'pending') {
@@ -169,7 +169,7 @@ function handleUpdate($id, $keyword, $reply, $impolite) {
     global $pdo;
     
     // Debug
-    error_log("Update impolite value: " . print_r($impolite, true));
+    // error_log("Update impolite value: " . print_r($impolite, true));
     
     // Kiểm tra dữ liệu đầu vào
     if (empty($keyword) || empty($reply)) {
