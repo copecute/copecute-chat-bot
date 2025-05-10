@@ -382,9 +382,9 @@ if (!function_exists('getUserRoleName')) {
                     <a href="<?php echo $base_url; ?>/login.php" class="btn nav-btn nav-btn-login">
                         <i class="fas fa-sign-in-alt"></i> Đăng nhập
                     </a>
-                    <a href="<?php echo $base_url; ?>/login.php" class="btn nav-btn nav-btn-signup">
+                    <!-- <a href="<?php //echo $base_url; ?>/login.php" class="btn nav-btn nav-btn-signup">
                         <i class="fas fa-user-plus"></i> Đăng ký
-                    </a>
+                    </a> -->
                     <?php else: ?>
                     <!-- Nút khi đã đăng nhập -->
                     <a href="<?php echo $base_url; ?>/chat/index.php" class="btn nav-btn nav-btn-signup">
@@ -470,7 +470,7 @@ if (!function_exists('getUserRoleName')) {
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-title">Tài khoản</div>
             
-            <a href="<?php echo $base_url; ?>/profile.php" class="sidebar-nav-item <?php echo $current_page == 'profile' ? 'active' : ''; ?>">
+            <a href="<?php echo $base_url; ?>/profile" class="sidebar-nav-item <?php echo $current_page == 'profile' ? 'active' : ''; ?>">
                 <i class="fas fa-user-circle"></i> Hồ sơ cá nhân
             </a>
             

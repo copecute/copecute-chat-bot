@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import '../models/user_model.dart';
-import '../utils/auth_service.dart';
-import '../services/profile_service.dart';
-import '../services/imgur_service.dart';
-import '../utils/app_theme.dart';
-import 'login_screen.dart';
+import 'package:copecute/models/user_model.dart';
+import 'package:copecute/utils/auth_service.dart';
+import 'package:copecute/services/profile_service.dart';
+import 'package:copecute/services/imgur_service.dart';
+import 'package:copecute/utils/app_theme.dart';
+import 'package:copecute/screens/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);

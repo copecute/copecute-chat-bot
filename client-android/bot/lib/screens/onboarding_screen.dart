@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/onboarding_content.dart';
-import 'login_screen.dart';
+import 'package:copecute/models/onboarding_content.dart';
+import 'package:copecute/screens/login_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});

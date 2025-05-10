@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../utils/auth_service.dart';
-import 'chat_screen.dart';
+import 'package:copecute/utils/auth_service.dart';
+import 'package:copecute/screens/chat_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);

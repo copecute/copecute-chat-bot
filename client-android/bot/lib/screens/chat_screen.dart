@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../utils/app_routes.dart';
-import '../utils/app_theme.dart';
-import '../models/message.dart';
-import '../widgets/chat_bubble.dart';
-import '../widgets/typing_indicator.dart';
-import '../providers/settings_provider.dart';
-import '../utils/auth_service.dart';
-import '../services/chat_service.dart';
-import 'login_screen.dart';
-import 'settings_screen.dart';
-import 'profile_screen.dart';
+import 'package:copecute/utils/app_routes.dart';
+import 'package:copecute/utils/app_theme.dart';
+import 'package:copecute/models/message.dart';
+import 'package:copecute/widgets/chat_bubble.dart';
+import 'package:copecute/widgets/typing_indicator.dart';
+import 'package:copecute/providers/settings_provider.dart';
+import 'package:copecute/utils/auth_service.dart';
+import 'package:copecute/services/chat_service.dart';
+import 'package:copecute/screens/login_screen.dart';
+import 'package:copecute/screens/settings_screen.dart';
+import 'package:copecute/screens/profile_screen.dart';
 import 'dart:io';
 
 class ChatScreen extends StatefulWidget {

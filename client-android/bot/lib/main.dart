@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
-import 'utils/auth_service.dart';
-import 'services/chat_service.dart';
-import 'screens/login_screen.dart';
-import 'screens/chat_screen.dart';
-import 'screens/profile_screen.dart';
-import 'screens/settings_screen.dart';
-import 'providers/settings_provider.dart';
-import 'utils/app_theme.dart';
-import 'services/profile_service.dart';
+import 'package:copecute/utils/auth_service.dart';
+import 'package:copecute/services/chat_service.dart';
+import 'package:copecute/screens/login_screen.dart';
+import 'package:copecute/screens/chat_screen.dart';
+import 'package:copecute/screens/profile_screen.dart';
+import 'package:copecute/screens/settings_screen.dart';
+import 'package:copecute/providers/settings_provider.dart';
+import 'package:copecute/utils/app_theme.dart';
+import 'package:copecute/services/profile_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'screens/onboarding_screen.dart';
+import 'package:copecute/screens/onboarding_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

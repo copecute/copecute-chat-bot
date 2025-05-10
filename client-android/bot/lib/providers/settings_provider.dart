@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/settings_model.dart';
+import 'package:copecute/models/settings_model.dart';
 import 'dart:io';
 
 class SettingsProvider extends ChangeNotifier {

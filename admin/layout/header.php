@@ -663,7 +663,7 @@ if (isset($_GET['logout'])) {
                         <i class="fas fa-chevron-down ms-2"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                        <li><a class="dropdown-item" href="<?php echo $base_url ?>/profile.php"><i class="fas fa-user fa-sm fa-fw me-2 text-gray-400"></i> Hồ sơ</a></li>
+                        <li><a class="dropdown-item" href="<?php echo $base_url ?>/profile"><i class="fas fa-user fa-sm fa-fw me-2 text-gray-400"></i> Hồ sơ</a></li>
                         <li><a class="dropdown-item" href="<?php echo $base_url ?>/admin/settings.php"><i class="fas fa-cogs fa-sm fa-fw me-2 text-gray-400"></i> Cài đặt</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="?logout=1"><i class="fas fa-sign-out-alt fa-sm fa-fw me-2 text-gray-400"></i> Đăng xuất</a></li>

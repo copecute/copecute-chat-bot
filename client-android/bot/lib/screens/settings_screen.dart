@@ -1,10 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/settings_provider.dart';
-import '../models/settings_model.dart';
-import '../utils/app_theme.dart';
-import '../services/image_service.dart';
+import 'package:copecute/providers/settings_provider.dart';
+import 'package:copecute/models/settings_model.dart';
+import 'package:copecute/utils/app_theme.dart';
+import 'package:copecute/services/image_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -400,30 +401,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
 
-          // Ngôn ngữ
-          _buildSectionHeader('Ngôn ngữ', context),
-          _buildCardSection(
-            children: [
-              ListTile(
-                title: Text(
-                  'Ngôn ngữ ứng dụng',
-                  style: TextStyle(color: textColor),
-                ),
-                subtitle: Text(
-                  'Tiếng Việt',
-                  style: TextStyle(color: subtitleColor, fontSize: 13),
-                ),
-                trailing: Icon(
-                  Icons.chevron_right,
-                  color: subtitleColor,
-                ),
-                onTap: () {
-                  // TODO: Thực hiện thay đổi ngôn ngữ
-                },
-              ),
-            ],
-          ),
-
           // Thông tin ứng dụng
           _buildSectionHeader('Thông tin', context),
           _buildCardSection(
@@ -449,7 +426,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   color: subtitleColor,
                 ),
                 onTap: () {
-                  // TODO: Mở điều khoản sử dụng
+                  // Mở điều khoản sử dụng
+                  launchUrl(Uri.parse(
+                      'https://copecute.minhgiang.pro/page/terms-of-use.php'));
                 },
               ),
               const Divider(),
@@ -463,7 +442,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   color: subtitleColor,
                 ),
                 onTap: () {
-                  // TODO: Mở chính sách bảo mật
+                  // Mở chính sách bảo mật
+                  launchUrl(Uri.parse(
+                      'https://copecute.minhgiang.pro/page/privacy-policy.php'));
                 },
               ),
             ],
